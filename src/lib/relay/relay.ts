@@ -5,7 +5,7 @@
 import type { ChatCompletionRequest } from '../types';
 import type { RelayResult } from '../providers/types';
 import { resolveProvider, getUpstreamUrl, resolveModelAlias } from '../providers';
-import { selectKey, markCooldown } from './key-pool';
+import { selectKey, markCooldown, getKeyPool } from './key-pool';
 import { buildHeaders, transformToAnthropic } from './transform';
 import { RelayError } from '../errors';
 import { createUsageEvent } from '../usage/sdk';
@@ -72,10 +72,8 @@ export async function relayRequest(
   const requestBody = isAnthropic ? transformToAnthropic(bodyWithResolvedModel) : bodyWithResolvedModel;
 
   // Retry with key rotation + exponential backoff
-  const maxRetries = Math.min(
-    (process.env.RELAY_API_KEY || '').split(',').length,
-    3
-  );
+  const pool = getKeyPool(provider);
+  const maxRetries = Math.min(pool.keys.length, 3);
   let lastError: Error | null = null;
   let currentKey = apiKey;
 
@@ -108,6 +106,17 @@ export async function relayRequest(
       // 429 → record in rate limiter + try next key
       if (upstreamResponse.status === 429) {
         record429(provider.name);
+        markCooldown(currentKey);
+        const nextKey = selectKey(provider);
+        if (nextKey && nextKey.hash !== currentKey.hash) {
+          currentKey = nextKey;
+          continue;
+        }
+        return { response: upstreamResponse, provider, apiKey: currentKey };
+      }
+
+      // 401/403 → key invalid/expired, rotate to next key
+      if (upstreamResponse.status === 401 || upstreamResponse.status === 403) {
         markCooldown(currentKey);
         const nextKey = selectKey(provider);
         if (nextKey && nextKey.hash !== currentKey.hash) {
