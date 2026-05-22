@@ -253,13 +253,14 @@ export async function POST(request: NextRequest) {
   // Pre-estimate prompt tokens for fallback
   const estimatedPromptTokens = estimatePromptTokens(body);
 
-  // 4. Relay the request
+    // 4. Relay the request
   try {
+    const startTime = Date.now();
     const { response, provider, apiKey } = await relayRequest(body);
+    const latencyMs = Date.now() - startTime;
 
     // 5. Stream or return the response
     if (body.stream) {
-      const startTime = Date.now();
       const wrappedBody = wrapStreamWithUsageTracking(
         response.body!,
         apiKey.hash,
@@ -285,19 +286,28 @@ export async function POST(request: NextRequest) {
       if (response.ok) {
         try {
           const data = JSON.parse(responseBody);
-          if (data.usage) {
-            const event = createUsageEvent({
-              provider: provider.name,
-              model: body.model,
-              apiKeyHash: apiKey.hash,
-              statusCode: response.status,
-              promptTokens: data.usage.prompt_tokens || 0,
-              completionTokens: data.usage.completion_tokens || 0,
-              latencyMs: 0,
-              isStream: false,
-            });
-            await usageStorage.record(event);
+          let promptTokens = data.usage?.prompt_tokens || 0;
+          let completionTokens = data.usage?.completion_tokens || 0;
+
+          // Fallback: if upstream doesn't return usage, estimate from response text
+          if (!data.usage || (promptTokens === 0 && completionTokens === 0)) {
+            const estimatedCompletion = estimateTokens(responseBody);
+            promptTokens = estimatedPromptTokens;
+            completionTokens = estimatedCompletion;
+            console.log(`[Usage] non-stream fallback estimation: prompt=${promptTokens}, completion=${completionTokens}, model=${body.model}`);
           }
+
+          const event = createUsageEvent({
+            provider: provider.name,
+            model: body.model,
+            apiKeyHash: apiKey.hash,
+            statusCode: response.status,
+            promptTokens,
+            completionTokens,
+            latencyMs,
+            isStream: false,
+          });
+          await usageStorage.record(event);
         } catch (e) {
           console.error('[Usage] non-stream track failed:', e);
         }
