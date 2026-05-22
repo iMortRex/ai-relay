@@ -33,6 +33,28 @@ const PREFIX = {
   keys: 'admin:keys:',             // admin:keys:{provider} → JSON string[] (raw API keys)
 } as const;
 
+/**
+ * Safely parses values retrieved from KV, handling both raw JSON strings
+ * and automatically deserialized array values (which some KV clients return).
+ */
+function parseJsonOrArray(val: unknown): string[] | null {
+  if (!val) return null;
+  if (Array.isArray(val)) {
+    return val.filter((item): item is string => typeof item === 'string');
+  }
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === 'string');
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+}
+
 // ── Fallback Chain Management ────────────────────────────────
 
 /**
@@ -53,8 +75,8 @@ export async function getFallbackChain(
         `getFallbackChain:${providerName}`
       );
       if (raw) {
-        const parsed = JSON.parse(raw as string);
-        if (Array.isArray(parsed)) return parsed;
+        const parsed = parseJsonOrArray(raw);
+        if (parsed) return parsed;
       }
     }
   } catch {
@@ -106,8 +128,8 @@ export async function getManagedKeys(providerName: string): Promise<string[] | n
         `getManagedKeys:${providerName}`
       );
       if (raw) {
-        const parsed = JSON.parse(raw as string);
-        if (Array.isArray(parsed)) return parsed;
+        const parsed = parseJsonOrArray(raw);
+        if (parsed) return parsed;
       }
     }
   } catch {
@@ -151,12 +173,11 @@ export async function getAllManagedKeys(): Promise<Record<string, string[]>> {
       );
       for (let i = 0; i < keys.length; i++) {
         const provider = keys[i].replace('admin:keys:', '');
-        try {
-          if (values[i]) {
-            out[provider] = JSON.parse(values[i] as string);
+        if (values[i]) {
+          const parsed = parseJsonOrArray(values[i]);
+          if (parsed) {
+            out[provider] = parsed;
           }
-        } catch {
-          // skip malformed
         }
       }
     }
