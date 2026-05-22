@@ -83,7 +83,6 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
     headerFormat: 'azure',
     envKeyField: 'XIAOMIMIMO_SGP_KEYS',
     envBaseUrlField: 'XIAOMIMIMO_SGP_BASE_URL',
-    fallbackProviders: ['xiaomi', 'deepseek'],  // SGP → CN → DeepSeek
     models: [
       { id: 'mimo-v2.5-pro', displayName: 'MiMo v2.5 Pro', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsTools: true },
       { id: 'mimo-v2.5-flash', displayName: 'MiMo v2.5 Flash', contextWindow: 128000, maxOutput: 16384, supportsStream: true },
