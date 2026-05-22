@@ -14,7 +14,8 @@ import { validateAuth, relayRequest } from '@/lib/relay';
 import { RelayError } from '@/lib/errors';
 import { KVUsageStorage, createUsageEvent } from '@/lib/usage';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 const usageStorage = new KVUsageStorage();
 
