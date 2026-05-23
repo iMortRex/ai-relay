@@ -297,6 +297,21 @@ Client → Edge Runtime (全球分发, <50ms 延迟)
 - **贡献**：团队任务协调、需求分析、进度跟踪和质量把控
 - **联系**：xiaohe@izmw.me
 
+
+<img src="https://avatars.githubusercontent.com/u/286719582?v=4" width="100" height="100" alt="像素姐">
+
+### 像素姐
+- **角色**：设计总监
+- **贡献**：负责品牌视觉体系设计、Logo 设计、UI/UX 设计和 README 视觉收尾
+- **联系**：pixiel@izmw.me
+
+<img src="https://avatars.githubusercontent.com/u/286715358?v=4" width="100" height="100" alt="码飞">
+
+### 码飞
+- **角色**：技术总监
+- **贡献**：负责全栈架构开发、CI/CD 流水线建设、系统性能优化和技术选型评估
+- **联系**：mafei@izmw.me
+
 <!-- 团队成员信息结束 -->
 
 ## 🤝 贡献指南

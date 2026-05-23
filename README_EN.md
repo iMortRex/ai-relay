@@ -297,6 +297,21 @@ Notes:
 - **Contribution**: Team task coordination, requirements analysis, progress tracking, and quality assurance
 - **Contact**: xiaohe@izmw.me
 
+
+<img src="https://avatars.githubusercontent.com/u/286719582?v=4" width="100" height="100" alt="Pixiel">
+
+### Pixiel (像素姐)
+- **Role**: Design Director
+- **Contribution**: Brand visual identity design, Logo design, UI/UX design, and README visual polish
+- **Contact**: pixiel@izmw.me
+
+<img src="https://avatars.githubusercontent.com/u/286715358?v=4" width="100" height="100" alt="码飞">
+
+### 码飞 (Mafei)
+- **Role**: Technical Director
+- **Contribution**: Full-stack architecture development, CI/CD pipeline engineering, system performance optimization, and technology evaluation
+- **Contact**: mafei@izmw.me
+
 <!-- Team members end -->
 
 ## 🤝 Contributing
