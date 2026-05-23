@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest } from 'next/server';
-import { requireAdminAuth, getManagedKeys } from '@/lib/admin';
+import { requireAdminAuth, getManagedKeys, tryDecodeBase64 } from '@/lib/admin';
 import { hashKey } from '@/lib/relay';
 import { getAllProviders } from '@/lib/providers';
 import { buildHeaders, transformToAnthropic } from '@/lib/relay/transform';
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest, { params }: { params: Params })
 
   let testKey = '';
   if (body.key && typeof body.key === 'string' && body.key.trim().length > 0) {
-    testKey = body.key.trim();
+    testKey = tryDecodeBase64(body.key.trim());
   } else if (body.hash && typeof body.hash === 'string' && body.hash.trim().length > 0) {
     // Locate plaintext key from managed KV or static env keys by matching hash
     const managed = await getManagedKeys(providerName);

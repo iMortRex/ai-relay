@@ -577,3 +577,24 @@ export async function deleteCustomProvider(name: string): Promise<void> {
   await kv.del(`admin:fallbacks:${name}`);
 }
 
+/**
+ * Try to decode a base64-encoded API key or JSON service account.
+ * Decodes only if the string matches base64 pattern and the output consists
+ * entirely of printable ASCII characters or common whitespace.
+ */
+export function tryDecodeBase64(str: string): string {
+  const trimmed = str.trim();
+  if (/^[A-Za-z0-9+/=\s]+$/.test(trimmed)) {
+    try {
+      const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
+      if (/^[\x20-\x7E\t\r\n]+$/.test(decoded) && decoded.trim().length > 0) {
+        return decoded;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return str;
+}
+
+

@@ -19,6 +19,7 @@ export {
   updateWebhook,
   deleteWebhook,
   saveAlertThresholds,
+  tryDecodeBase64,
 } from './admin-config';
 
 export { requireAdminAuth, getRelayApiKeys, getRelayAdminKeys } from './auth';

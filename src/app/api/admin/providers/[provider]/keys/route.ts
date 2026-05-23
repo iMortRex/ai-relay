@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest } from 'next/server';
-import { requireAdminAuth, getManagedKeys, addManagedKey, removeManagedKey, setManagedKeys } from '@/lib/admin';
+import { requireAdminAuth, getManagedKeys, addManagedKey, removeManagedKey, setManagedKeys, tryDecodeBase64 } from '@/lib/admin';
 import { hashKey, updateMemoryKeyPool } from '@/lib/relay';
 import { getAllProviders } from '@/lib/providers';
 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest, { params }: { params: Params })
     );
   }
 
-  const newKey = body.key.trim();
+  const newKey = tryDecodeBase64(body.key.trim());
   const envKeys = config.envKeyField
     ? (process.env[config.envKeyField] || '').split(',').map((k) => k.trim()).filter(Boolean)
     : [];

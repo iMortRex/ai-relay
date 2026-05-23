@@ -266,7 +266,7 @@ Client → Edge Runtime (全球分发, <50ms 延迟)
 
 | | 姓名 | 角色 | 贡献 | 联系 |
 |---|---|---|---|---|
-| <img src="https://avatars.githubusercontent.com/u/35733668?v=4" width="32" height="32" style="border-radius:50%"> | Parsifal | 创始人 & 项目负责人 | 项目发起人，负责整体架构设计、技术选型和团队管理 | zmw@izmw.me |
+| <img src="https://avatars.githubusercontent.com/u/7930911?v=4" width="32" height="32" style="border-radius:50%"> | Parsifal | 创始人 & 项目负责人 | 项目发起人，负责整体架构设计、技术选型和团队管理 | zmw@izmw.me |
 | <img src="https://avatars.githubusercontent.com/u/286714101?v=4" width="32" height="32" style="border-radius:50%"> | 小赫 | 协调者 | 团队任务协调、需求分析、进度跟踪和质量把控 | xiaohe@izmw.me |
 | <img src="https://avatars.githubusercontent.com/u/286719582?v=4" width="32" height="32" style="border-radius:50%"> | 像素姐 | 设计总监 | 品牌视觉体系设计、Logo 设计、UI/UX 设计和 README 视觉收尾 | pixiel@izmw.me |
 | <img src="https://avatars.githubusercontent.com/u/286715358?v=4" width="32" height="32" style="border-radius:50%"> | 码飞 | 技术总监 | 全栈架构开发、CI/CD 流水线建设、系统性能优化和技术选型评估 | mafei@izmw.me |
