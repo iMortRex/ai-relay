@@ -8,6 +8,18 @@
 
 （暂无）
 
+## [2.2.0] - 2026-05-25
+
+### Added
+- 新增 Admin 后台批量导入 Provider API Key 能力，支持逗号或换行分隔的多 Key 一次性导入，并返回新增 / 重复计数。
+- 新增首页导航栏「管理后台」入口，无需手动输入 URL 即可进入 Admin Dashboard。
+
+### Changed
+- 升级 DeepSeek 默认模型为 `deepseek-v4-flash` 和 `deepseek-v4-pro`，上下文窗口提升至 1M tokens。
+- 保留 `deepseek-chat` / `deepseek-reasoner` 作为别名，现有调用无需修改即可平滑迁移到新模型。
+- 优化 Admin 后台 Provider 状态指示器的布局，保持单行展示不换行。
+- 更新 README 中 DeepSeek 模型示例为最新 v4 系列。
+
 ## [2.1.0] - 2026-05-25
 
 ### Added
