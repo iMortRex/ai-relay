@@ -4,8 +4,14 @@
 //
 // Optimization: entries are buffered in memory and flushed to KV
 // in batches via pipeline, reducing per-request KV commands from 4 to ~0.
+//
+// Disable by default to save KV quota. Set ENABLE_REQUEST_LOGS=true to enable.
 
 import { kvKeys } from '@/lib/usage/storage/kv-keys';
+
+function isRequestLogsEnabled(): boolean {
+  return process.env.ENABLE_REQUEST_LOGS === 'true';
+}
 
 export type RequestLogStatus = 'success' | 'error';
 
@@ -156,6 +162,9 @@ function ensureFlushTimer(): void {
  * Previously: 4 KV commands per request. Now: 0 KV commands per request (deferred to batch).
  */
 export async function recordRequestLog(input: RequestLogEntry): Promise<void> {
+  // Skip if request logs are disabled
+  if (!isRequestLogsEnabled()) return;
+
   const entry = sanitizeEntry(input);
   remember(entry);
 
@@ -170,6 +179,11 @@ export async function recordRequestLog(input: RequestLogEntry): Promise<void> {
 }
 
 export async function listRequestLogs(filters: RequestLogFilters = {}): Promise<RequestLogListResult> {
+  // Return empty if request logs are disabled
+  if (!isRequestLogsEnabled()) {
+    return { items: [], degraded: false, source: 'memory' };
+  }
+
   const kv = await getKV();
   if (!kv || kvUnavailable) {
     return { items: applyFilters(requestLogStore, filters), degraded: true, source: 'memory' };
