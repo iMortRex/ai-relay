@@ -1,17 +1,12 @@
 // ============================================================
-// AI Relay v2.1 — Request Logs with KV + memory fallback
+// AI Relay v2.1 — Request Logs (memory-only)
 // ============================================================
 //
-// Optimization: entries are buffered in memory and flushed to KV
-// in batches via pipeline, reducing per-request KV commands from 4 to ~0.
-//
-// Disable by default to save KV quota. Set ENABLE_REQUEST_LOGS=true to enable.
-
-import { kvKeys } from '@/lib/usage/storage/kv-keys';
-
-function isRequestLogsEnabled(): boolean {
-  return process.env.ENABLE_REQUEST_LOGS === 'true';
-}
+// Lightweight in-memory request log for debugging.
+// No KV storage — logs live only in the serverless instance memory.
+// Configure via env vars:
+//   ENABLE_REQUEST_LOGS=true    to enable (default: disabled)
+//   REQUEST_LOGS_MAX_ENTRIES=50 max entries to keep in memory (default: 50)
 
 export type RequestLogStatus = 'success' | 'error';
 
@@ -43,30 +38,25 @@ export interface RequestLogFilters {
 export interface RequestLogListResult {
   items: RequestLogEntry[];
   degraded: boolean;
-  source: 'kv' | 'memory';
+  source: 'memory';
 }
 
-const MAX_MEMORY_LOGS = 500;
+// ── Configuration ────────────────────────────────────────────
+function isRequestLogsEnabled(): boolean {
+  return process.env.ENABLE_REQUEST_LOGS === 'true';
+}
+
+function getMaxEntries(): number {
+  const raw = process.env.REQUEST_LOGS_MAX_ENTRIES;
+  if (!raw) return 50;
+  const n = parseInt(raw, 10);
+  return isNaN(n) || n < 1 ? 50 : Math.min(n, 500); // hard cap at 500
+}
+
 const DEFAULT_LIMIT = 50;
 const requestLogStore: RequestLogEntry[] = [];
-let kvUnavailable = false;
 
-// ── Batch buffer for KV writes ──────────────────────────────
-const FLUSH_INTERVAL_MS = 30_000; // flush every 30s
-const FLUSH_BATCH_SIZE = 50;      // or when buffer hits 50 entries
-const _pendingLogs: RequestLogEntry[] = [];
-let _flushTimer: ReturnType<typeof setInterval> | null = null;
-let _flushInFlight = false;
-
-async function getKV(): Promise<any | null> {
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
-  try {
-    const mod = await import('@vercel/kv');
-    return mod.kv || mod.createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
-  } catch {
-    return null;
-  }
-}
+// ── Helpers ──────────────────────────────────────────────────
 
 export function sanitizeDiagnosticText(input?: string): string | undefined {
   if (!input) return input;
@@ -99,126 +89,37 @@ function applyFilters(items: RequestLogEntry[], filters: RequestLogFilters = {})
 
 function remember(entry: RequestLogEntry): void {
   requestLogStore.unshift(entry);
-  if (requestLogStore.length > MAX_MEMORY_LOGS) requestLogStore.length = MAX_MEMORY_LOGS;
+  const max = getMaxEntries();
+  if (requestLogStore.length > max) requestLogStore.length = max;
 }
+
+// ── Public API ───────────────────────────────────────────────
 
 /**
- * Flush pending log entries to KV in a single pipeline call.
- * This replaces the old per-request 4-command KV write pattern.
- */
-async function flushPendingLogs(): Promise<void> {
-  if (_flushInFlight || _pendingLogs.length === 0 || kvUnavailable) return;
-  _flushInFlight = true;
-
-  const batch = _pendingLogs.splice(0, FLUSH_BATCH_SIZE);
-  try {
-    const kv = await getKV();
-    if (!kv) {
-      kvUnavailable = true;
-      // Re-add entries back so they aren't lost (best-effort)
-      _pendingLogs.unshift(...batch);
-      return;
-    }
-
-    const indexKey = kvKeys.requestLogsIndex();
-    const p = kv.pipeline();
-
-    for (const entry of batch) {
-      const key = kvKeys.requestLog(entry.traceId);
-      p.set(key, entry, { ex: 60 * 60 * 24 * 7 });
-    }
-    // Push all trace IDs to the index in one go
-    for (const entry of batch) {
-      p.lpush(indexKey, entry.traceId);
-    }
-    // Single trim + expire for the index
-    p.ltrim(indexKey, 0, 499);
-    p.expire(indexKey, 60 * 60 * 24 * 7);
-
-    await p.exec();
-  } catch {
-    kvUnavailable = true;
-    // Re-add on failure
-    _pendingLogs.unshift(...batch);
-  } finally {
-    _flushInFlight = false;
-  }
-}
-
-function ensureFlushTimer(): void {
-  if (_flushTimer) return;
-  _flushTimer = setInterval(() => {
-    flushPendingLogs().catch(() => {});
-  }, FLUSH_INTERVAL_MS);
-  // Don't prevent Node from exiting
-  if (_flushTimer && typeof _flushTimer === 'object' && 'unref' in _flushTimer) {
-    _flushTimer.unref();
-  }
-}
-
-/**
- * Record a request log entry.
- * Writes to memory immediately; buffers for KV batch flush.
- * Previously: 4 KV commands per request. Now: 0 KV commands per request (deferred to batch).
+ * Record a request log entry (memory only, no KV).
  */
 export async function recordRequestLog(input: RequestLogEntry): Promise<void> {
-  // Skip if request logs are disabled
   if (!isRequestLogsEnabled()) return;
-
-  const entry = sanitizeEntry(input);
-  remember(entry);
-
-  // Buffer for batched KV write
-  _pendingLogs.push(entry);
-  ensureFlushTimer();
-
-  // If buffer is large enough, trigger an immediate flush (don't await)
-  if (_pendingLogs.length >= FLUSH_BATCH_SIZE) {
-    flushPendingLogs().catch(() => {});
-  }
+  remember(sanitizeEntry(input));
 }
 
+/**
+ * List request logs from memory.
+ */
 export async function listRequestLogs(filters: RequestLogFilters = {}): Promise<RequestLogListResult> {
-  // Return empty if request logs are disabled
   if (!isRequestLogsEnabled()) {
     return { items: [], degraded: false, source: 'memory' };
   }
-
-  const kv = await getKV();
-  if (!kv || kvUnavailable) {
-    return { items: applyFilters(requestLogStore, filters), degraded: true, source: 'memory' };
-  }
-  try {
-    // Flush pending before reading to ensure consistency
-    await flushPendingLogs();
-
-    const ids: string[] = await kv.lrange(kvKeys.requestLogsIndex(), 0, 499);
-    const entries = (await Promise.all(ids.map((id) => kv.get(kvKeys.requestLog(id)))))
-      .filter(Boolean) as RequestLogEntry[];
-    return { items: applyFilters(entries, filters), degraded: false, source: 'kv' };
-  } catch {
-    kvUnavailable = true;
-    return { items: applyFilters(requestLogStore, filters), degraded: true, source: 'memory' };
-  }
+  return { items: applyFilters(requestLogStore, filters), degraded: false, source: 'memory' };
 }
+
+// ── Test helpers ─────────────────────────────────────────────
 
 export const __requestLogStoreForTests = {
   clear(): void {
     requestLogStore.length = 0;
-    _pendingLogs.length = 0;
-    kvUnavailable = false;
-    if (_flushTimer) {
-      clearInterval(_flushTimer);
-      _flushTimer = null;
-    }
   },
   items(): RequestLogEntry[] {
     return [...requestLogStore];
-  },
-  pendingCount(): number {
-    return _pendingLogs.length;
-  },
-  async forceFlush(): Promise<void> {
-    await flushPendingLogs();
   },
 };
