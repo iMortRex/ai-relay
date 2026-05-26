@@ -13,6 +13,7 @@ import RequestLogsTab from './components/RequestLogsTab';
 import ModelAliasesTab from './components/ModelAliasesTab';
 import PriorityRulesTab from './components/PriorityRulesTab';
 import { ErrorDetailPanel } from '../components/ErrorDetailPanel';
+import { BottomNav, type TabId } from '../components/BottomNav';
 import type { AdminData, PriorityRule, PriorityRuleConflict } from './types';
 import { TRANSLATIONS } from './translations';
 import { useAdminHandlers } from './adminHandlers';
@@ -333,7 +334,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main style={{
+    <main className="admin-content" style={{
       maxWidth: '1000px', margin: '0 auto', padding: '2rem',
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -467,8 +468,8 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Tabs list */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+      {/* Tabs list — hidden on mobile (< 640px) where BottomNav takes over */}
+      <div className="admin-desktop-tabs" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <button
           className={`tab-btn ${activeTab === 'setup' ? 'active' : ''}`}
           onClick={() => setActiveTab('setup')}
@@ -662,6 +663,12 @@ export default function AdminPage() {
           {t.autoRefreshInfo} {new Date(data.timestamp).toLocaleTimeString()}
         </p>
       )}
+
+      {/* Mobile bottom navigation — only visible on screens < 640px */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
     </main>
   );
 }
