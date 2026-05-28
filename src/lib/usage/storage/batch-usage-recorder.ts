@@ -12,6 +12,7 @@
 // - Risk: un-flushed data lost on cold restart (max ~60s of data)
 
 import type { KVUsageStorage } from './kv-storage';
+import { getUsageSamplingInfo, shouldSample } from './kv-storage';
 import type { UsageEvent } from '../sdk';
 
 const MAX_BATCH_SIZE = 100;
@@ -46,20 +47,32 @@ export class BatchUsageRecorder {
   record(event: UsageEvent): void {
     if (this.destroyed) return;
 
-    const keys = this.getKeysForEvent(event);
+    const usageSampleRate = getUsageSamplingInfo().sampleRate;
+    if (!shouldSample(usageSampleRate)) return;
+    const usageScale = usageSampleRate > 0 && usageSampleRate < 1
+      ? Math.max(1, Math.round(1 / usageSampleRate))
+      : 1;
+    const scaledEvent: UsageEvent = {
+      ...event,
+      promptTokens: event.promptTokens * usageScale,
+      completionTokens: event.completionTokens * usageScale,
+      totalTokens: event.totalTokens * usageScale,
+    };
+
+    const keys = this.getKeysForEvent(scaledEvent);
     for (const key of keys) {
       const existing = this.pending.get(key);
       if (existing) {
-        existing.requests += 1;
-        existing.tokens += event.totalTokens;
-        existing.promptTokens += event.promptTokens;
-        existing.completionTokens += event.completionTokens;
+        existing.requests += usageScale;
+        existing.tokens += scaledEvent.totalTokens;
+        existing.promptTokens += scaledEvent.promptTokens;
+        existing.completionTokens += scaledEvent.completionTokens;
       } else {
         this.pending.set(key, {
-          requests: 1,
-          tokens: event.totalTokens,
-          promptTokens: event.promptTokens,
-          completionTokens: event.completionTokens,
+          requests: usageScale,
+          tokens: scaledEvent.totalTokens,
+          promptTokens: scaledEvent.promptTokens,
+          completionTokens: scaledEvent.completionTokens,
         });
       }
     }
@@ -147,7 +160,7 @@ export class BatchUsageRecorder {
             totalTokens: entry.tokens,
             latencyMs: 0,
             isStream: false,
-          }, entry.requests)
+          }, entry.requests, { includeGlobal: false })
         );
       }
     }

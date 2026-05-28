@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { __adminConfigCacheForTests, createMemoryMockKV, getManagedKeys, getManagedKeysVersion, setManagedKeys } from '../lib/admin/admin-config';
 import { __usageStorageCacheForTests, getUsageSamplingInfo, KVUsageStorage } from '../lib/usage/storage/kv-storage';
-import { createUsageEvent } from '../lib/usage';
+import { BatchUsageRecorder, createUsageEvent } from '../lib/usage';
 import { kvKeys } from '../lib/usage/storage/kv-keys';
 import { getKeyPool } from '../lib/relay/key-pool';
 
@@ -105,6 +105,71 @@ describe('KV command optimization', () => {
     await storage.record(usageEvent());
 
     expect(await kv.hgetall(kvKeys.usageDaily(date))).toBeNull();
+  });
+
+  it('applies usage sampling to batched usage writes and scales counters', async () => {
+    const kv = installMockKV();
+    vi.stubEnv('RELAY_KV_USAGE_SAMPLE_RATE', '0.25');
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+    const storage = new KVUsageStorage();
+    const recorder = new BatchUsageRecorder();
+    recorder.setStorage(storage);
+    const date = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    recorder.record(usageEvent());
+    await recorder.flush();
+
+    expect(await kv.hgetall(kvKeys.usageDaily(date))).toMatchObject({
+      requests: 4,
+      tokens: 100,
+      promptTokens: 40,
+      completionTokens: 60,
+    });
+    expect(await kv.hgetall(kvKeys.usageProviderDaily('openai', date))).toMatchObject({
+      requests: 4,
+      tokens: 100,
+    });
+  });
+
+  it('skips batched usage writes when sampling misses', async () => {
+    const kv = installMockKV();
+    vi.stubEnv('RELAY_KV_USAGE_SAMPLE_RATE', '0.25');
+    vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    const storage = new KVUsageStorage();
+    const recorder = new BatchUsageRecorder();
+    recorder.setStorage(storage);
+    const date = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    recorder.record(usageEvent());
+    await recorder.flush();
+
+    expect(await kv.hgetall(kvKeys.usageDaily(date))).toBeNull();
+    expect(await kv.hgetall(kvKeys.usageProviderDaily('openai', date))).toBeNull();
+  });
+
+  it('does not double count global requests when flushing provider batches', async () => {
+    const kv = installMockKV();
+    const storage = new KVUsageStorage();
+    const recorder = new BatchUsageRecorder();
+    recorder.setStorage(storage);
+    const date = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    recorder.record(usageEvent());
+    recorder.record(usageEvent({ completionTokens: 5 }));
+    await recorder.flush();
+
+    expect(await kv.hgetall(kvKeys.usageDaily(date))).toMatchObject({
+      requests: 2,
+      tokens: 40,
+      promptTokens: 20,
+      completionTokens: 20,
+    });
+    expect(await kv.hgetall(kvKeys.usageProviderDaily('openai', date))).toMatchObject({
+      requests: 2,
+      tokens: 40,
+      promptTokens: 20,
+      completionTokens: 20,
+    });
   });
 
   it('clears cached per-key usage after usage writes', async () => {

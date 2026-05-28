@@ -230,7 +230,7 @@ function getMode(): 'off' | 'sampled' | 'full' {
   return 'off';
 }
 
-function getSampleRate(envName: string, fallback: number): number {
+export function getSampleRate(envName: string, fallback: number): number {
   const value = Number(process.env[envName] || fallback);
   if (!Number.isFinite(value)) return fallback;
   return Math.min(1, Math.max(0, value));
@@ -241,7 +241,7 @@ export function getUsageSamplingInfo(): { sampleRate: number; estimated: boolean
   return { sampleRate, estimated: sampleRate < 1 };
 }
 
-function shouldSample(rate: number): boolean {
+export function shouldSample(rate: number): boolean {
   return rate >= 1 || (rate > 0 && Math.random() < rate);
 }
 
@@ -254,12 +254,15 @@ local writeProvider = ARGV[5] == "1"
 local writeKeyUsage = ARGV[6] == "1"
 local keyRequests = tonumber(ARGV[7]) or 0
 local keyTokens = tonumber(ARGV[8]) or 0
+local writeGlobal = ARGV[9] ~= "0"
 
-redis.call("HINCRBY", KEYS[1], "requests", requests)
-redis.call("HINCRBY", KEYS[1], "tokens", tokens)
-redis.call("HINCRBY", KEYS[1], "promptTokens", promptTokens)
-redis.call("HINCRBY", KEYS[1], "completionTokens", completionTokens)
-redis.call("EXPIRE", KEYS[1], 2592000)
+if writeGlobal then
+  redis.call("HINCRBY", KEYS[1], "requests", requests)
+  redis.call("HINCRBY", KEYS[1], "tokens", tokens)
+  redis.call("HINCRBY", KEYS[1], "promptTokens", promptTokens)
+  redis.call("HINCRBY", KEYS[1], "completionTokens", completionTokens)
+  redis.call("EXPIRE", KEYS[1], 2592000)
+end
 
 if writeProvider then
   redis.call("HINCRBY", KEYS[2], "requests", requests)
@@ -334,13 +337,17 @@ async function recordUsageFallback(kv: any, keys: string[], args: string[]): Pro
   const writeKeyUsage = args[5] === '1';
   const keyRequests = Number(args[6] || 0);
   const keyTokens = Number(args[7] || 0);
-  const promises: Promise<unknown>[] = [
-    kv.hincrby(keys[0], 'requests', requests),
-    kv.hincrby(keys[0], 'tokens', tokens),
-    kv.hincrby(keys[0], 'promptTokens', promptTokens),
-    kv.hincrby(keys[0], 'completionTokens', completionTokens),
-    kv.expire(keys[0], 86400 * 30),
-  ];
+  const writeGlobal = args[8] !== '0';
+  const promises: Promise<unknown>[] = [];
+  if (writeGlobal) {
+    promises.push(
+      kv.hincrby(keys[0], 'requests', requests),
+      kv.hincrby(keys[0], 'tokens', tokens),
+      kv.hincrby(keys[0], 'promptTokens', promptTokens),
+      kv.hincrby(keys[0], 'completionTokens', completionTokens),
+      kv.expire(keys[0], 86400 * 30)
+    );
+  }
   if (writeProvider) {
     promises.push(
       kv.hincrby(keys[1], 'requests', requests),
@@ -542,6 +549,7 @@ export class KVUsageStorage implements UsageStorage {
             writeKeyUsage ? '1' : '0',
             String(keyRequests),
             String(keyTokens),
+            '1',
           ]
         ),
         1000,
@@ -559,11 +567,12 @@ export class KVUsageStorage implements UsageStorage {
    * Skips per-event sampling — sampling is handled at the caller level.
    * Writes global + per-provider aggregated counters.
    */
-  async recordDirect(event: UsageEvent, requestCount?: number): Promise<void> {
+  async recordDirect(event: UsageEvent, requestCount?: number, options: { includeGlobal?: boolean } = {}): Promise<void> {
     try {
       const kv = await getKV();
       if (!kv) return;
 
+      const includeGlobal = options.includeGlobal ?? true;
       const date = today();
       const count = requestCount ?? (event.promptTokens > 0 || event.completionTokens > 0 ? 1 : 0);
       const totalTokens = event.totalTokens;
@@ -588,6 +597,7 @@ export class KVUsageStorage implements UsageStorage {
             '0', // no per-key writes for batch
             '0',
             '0',
+            includeGlobal ? '1' : '0',
           ]
         ),
         1000,
