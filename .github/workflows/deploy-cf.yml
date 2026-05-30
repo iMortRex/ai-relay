@@ -134,6 +134,13 @@ jobs:
           echo "=== Final wrangler.toml ==="
           cat wrangler.toml
 
+      - name: Ensure Pages project exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Create project if it doesn't exist; ignore error if it already does
+          pnpm exec wrangler pages project create ai-relay --production-branch main 2>&1 || true
 
       - name: Build for Cloudflare Pages
         run: pnpm exec opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion
