@@ -173,11 +173,13 @@ npx wrangler kv namespace create ai-relay
 **第 4 步 — 推送触发部署**
 
 推送到 `main` 分支，GitHub Actions 会自动：
-1. 构建 Next.js 应用（`@cloudflare/next-on-pages`）
+1. 构建 Next.js 应用（`@opennextjs/cloudflare`）
 2. 执行 D1 migrations（建表，幂等）
 3. 部署到 Cloudflare Pages
 
 > **存储说明：** CF 部署使用 Cloudflare KV（配置数据）+ D1（用量统计）。免费层限制：D1 写入 10 万行/天（约支持 3–5 万次 AI 请求/天），KV 写入 1,000 次/天（仅用于配置变更，正常使用不会触及上限）。开启 quota 检查时每次请求写一行 D1，高并发场景请关注用量。
+> 
+> **Cron 说明：** CF Pages Cron Triggers 通过 `worker.ts` 中的 `scheduled()` handler 执行定时任务，不走 HTTP 路由。默认配置每日 00:00 UTC 重置配额计数器，00:05 UTC 执行健康探测。
 
 </details>
 
