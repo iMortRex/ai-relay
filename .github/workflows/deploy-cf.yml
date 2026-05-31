@@ -158,7 +158,7 @@ jobs:
             mv .open-next/worker.js .open-next/_worker.js
           fi
           # Create _routes.json to tell Cloudflare Pages to serve static files directly from CDN instead of passing them to the worker
-          echo '{"version":1,"include":["/*"],"exclude":["/","/admin","/admin/","/_next/static/*","/favicon.ico","/*.png","/*.ico","/*.txt","/*.svg"]}' > .open-next/_routes.json
+          echo '{"version":1,"include":["/*"],"exclude":["/_next/static/*","/favicon.ico","/*.png","/*.ico","/*.txt","/*.svg"]}' > .open-next/_routes.json
 
       - name: Apply D1 migrations
         env:
