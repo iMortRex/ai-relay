@@ -2,23 +2,27 @@
 
 <img src="docs/assets/logo-banner.svg" alt="AI Relay" width="400">
 
-**无服务器 AI API 中转网关：一键部署到 Vercel，2 分钟拥有自己的多 Provider AI Relay**
+**无服务器 AI API 中转网关：一键部署到 Vercel，或通过 GitHub Actions 自动部署到 Cloudflare**
 
-<h3>🚀 <a href="https://vercel.com/new/clone?repository-url=https://github.com/MoyuFamily/ai-relay&env=RELAY_API_KEY,RELAY_ADMIN_KEY,RELAY_SIGNING_SECRET&envDescription=API%20authentication%20keys%20(required%20for%20security)&envLink=https://github.com/MoyuFamily/ai-relay#environment-variables">一键部署到 Vercel，2 分钟上线你的 AI API 网关</a></h3>
+<h3>🚀 <a href="https://vercel.com/new/clone?repository-url=https://github.com/MoyuFamily/ai-relay&env=RELAY_API_KEY,RELAY_ADMIN_KEY,RELAY_SIGNING_SECRET&envDescription=API%20authentication%20keys%20(required%20for%20security)&envLink=https://github.com/MoyuFamily/ai-relay#environment-variables">一键部署到 Vercel，2 分钟上线你的 AI API 网关</a> · <a href="#-部署到-cloudflare-pages全自动">部署到 Cloudflare Pages</a></h3>
 
-<p>不用买服务器，不用维护 Docker，只需填写 3 个环境变量，即可拥有自己的多 Provider AI Relay。</p>
+<p>不用买服务器，不用维护 Docker。Vercel 一键部署即开即用；Cloudflare 通过 GitHub Actions 推送即部署，D1 + KV 全自动配置。</p>
 
 <p>
   <a href="https://vercel.com/new/clone?repository-url=https://github.com/MoyuFamily/ai-relay&env=RELAY_API_KEY,RELAY_ADMIN_KEY,RELAY_SIGNING_SECRET&envDescription=API%20authentication%20keys%20(required%20for%20security)&envLink=https://github.com/MoyuFamily/ai-relay#environment-variables">
     <img src="https://vercel.com/button" alt="Deploy with Vercel" height="42">
   </a>
+  &nbsp;&nbsp;
+  <a href="#-部署到-cloudflare-pages全自动">
+    <img src="https://img.shields.io/badge/⚡_Deploy_to_Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Deploy to Cloudflare" height="42">
+  </a>
 </p>
 
-<p><strong><a href="https://vercel.com/new/clone?repository-url=https://github.com/MoyuFamily/ai-relay&env=RELAY_API_KEY,RELAY_ADMIN_KEY,RELAY_SIGNING_SECRET&envDescription=API%20authentication%20keys%20(required%20for%20security)&envLink=https://github.com/MoyuFamily/ai-relay#environment-variables">👉 立即一键部署</a></strong> · <a href="#-一键部署2-分钟上线你的-ai-api-网关">查看部署步骤</a></p>
+<p><strong><a href="https://vercel.com/new/clone?repository-url=https://github.com/MoyuFamily/ai-relay&env=RELAY_API_KEY,RELAY_ADMIN_KEY,RELAY_SIGNING_SECRET&envDescription=API%20authentication%20keys%20(required%20for%20security)&envLink=https://github.com/MoyuFamily/ai-relay#environment-variables">👉 立即一键部署</a></strong> · <a href="#-一键部署2-分钟上线你的-ai-api-网关">查看部署步骤</a> · <a href="#-部署到-cloudflare-pages全自动">Cloudflare 部署指南</a></p>
 
 [![Version](https://img.shields.io/badge/Version-2.8.0-green.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
 [![Edge Runtime](https://img.shields.io/badge/Edge_Runtime-⚡-black?logo=vercel)](https://vercel.com/docs/functions/edge-functions)
 [![Upstash Redis](https://img.shields.io/badge/Upstash_Redis-Redis-black?logo=redis)](https://vercel.com/marketplace/upstash)
 
@@ -30,13 +34,13 @@
 
 > 🚀 **不用买服务器，不用写后端，不用维护 Docker。**
 >
-> AI Relay 基于 Vercel Edge Runtime 构建，点击 **Deploy with Vercel**，配置 3 个环境变量，即可获得一个支持 OpenAI / Claude / DeepSeek / 自定义 Provider 的无服务器 AI API 中转网关。
+> AI Relay 基于 Edge Runtime 构建。**Vercel** 一键部署即开即用；**Cloudflare Pages** 通过 GitHub Actions 推送即部署，D1 + KV + Cron 全自动配置。支持 OpenAI / Claude / DeepSeek / 自定义 Provider。
 
 | 你关心的 | AI Relay 的答案 |
 |---|---|
-| **怎么部署？** | 点一下 Deploy with Vercel，填 3 个环境变量，约 2 分钟上线 |
+| **怎么部署？** | Vercel：点按钮填变量，2 分钟上线 · Cloudflare：Fork + 配 Secrets，push 即部署 |
 | **要服务器吗？** | 不需要 VPS，不需要 Docker，不需要后端运维 |
-| **能免费跑吗？** | 面向 Vercel Edge + KV 设计，个人 / 小团队可从免费层开始；Upstash 免费层每月 50 万次 KV 操作，开启采样后请求与 KV 读写比可低至 1:1 |
+| **能免费跑吗？** | 个人 / 小团队可从免费层开始；Vercel + Upstash（每月 50 万次 KV 操作）或 Cloudflare（D1 + KV 免费层）均可零成本启动 |
 | **接入复杂吗？** | OpenAI SDK 只改 `base_url`，继续使用 `/v1/chat/completions` |
 
 ## 目录
@@ -59,9 +63,9 @@
 
 | 特性 | 说明 |
 |------|------|
-| **无服务器架构** | 基于 Vercel Edge Runtime，无需购买 VPS / 维护 Docker / 管理后端服务 |
-| **一键部署** | 点击 Deploy with Vercel，填写 3 个环境变量，约 2 分钟上线 |
-| **免费层可用** | 个人和小团队可直接使用 Vercel 免费层跑起来 |
+| **无服务器架构** | 基于 Edge Runtime（Vercel / Cloudflare），无需购买 VPS / 维护 Docker / 管理后端服务 |
+| **一键部署** | Vercel 一键部署即开即用；Cloudflare 通过 GitHub Actions 推送即部署，D1 + KV 全自动配置 |
+| **免费层可用** | 个人和小团队可从 Vercel 或 Cloudflare 免费层开始跑起来 |
 | **OpenAI 兼容** | 直接用 OpenAI SDK 对接，零改动 |
 | **多 Provider 路由** | OpenAI · Claude · DeepSeek · MiMo · 自定义 |
 | **多 Key 轮换** | Round-Robin + 429 自动退避 |
@@ -221,7 +225,7 @@ npm run dev  # http://localhost:3000
 
 | 特性 | AI Relay | OpenRouter | OneAPI / new-api | FastGPT |
 |------|----------|------------|------------------|---------|
-| **部署方式** | **Vercel 一键部署（Edge）** | 纯 SaaS | 自托管（Docker） | 自托管（Docker） |
+| **部署方式** | **Vercel / Cloudflare 一键部署（Edge）** | 纯 SaaS | 自托管（Docker） | 自托管（Docker） |
 | **基础设施成本** | **无需服务器，可从免费层开始** | 按量付费 | 需要服务器 | 需要服务器 |
 | **冷启动** | < 50ms | N/A | 秒级 | 秒级 |
 | **熔断器** | ✅ | ❌ | ❌ | ❌ |
@@ -231,13 +235,14 @@ npm run dev  # http://localhost:3000
 | **临时 API Key** | ✅ HMAC 签名 | ❌ | ✅ | ✅ |
 | **主要场景** | 个人 / 小团队 | API 市场 | 多 Key 管理 | 知识库 + API |
 
-**选择 AI Relay：** 当你想要“自己可控的 AI API 网关”，但不想买服务器、维护 Docker 或搭后端时，AI Relay 是更轻的路线：无服务器、2 分钟部署、多 Provider 故障转移、Edge 低延迟。
+**选择 AI Relay：** 当你想要"自己可控的 AI API 网关"，但不想买服务器、维护 Docker 或搭后端时，AI Relay 是更轻的路线：无服务器、双平台（Vercel / Cloudflare）、2 分钟部署、多 Provider 故障转移、Edge 低延迟。
 
 ## 为什么选择 AI Relay？
 
-- **不用服务器**：跑在 Vercel Edge Runtime，无需 VPS、Docker、运维。
+- **不用服务器**：跑在 Edge Runtime，无需 VPS、Docker、运维。
+- **双平台可选**：Vercel 一键部署；Cloudflare 通过 GitHub Actions 推送即部署，不绑定单一平台。
 - **部署足够快**：点击按钮 + 填环境变量，2 分钟完成上线。
-- **成本足够低**：个人开发者和小团队可以从 Vercel 免费层开始。
+- **成本足够低**：个人开发者和小团队可以从免费层开始。
 - **接入足够简单**：兼容 OpenAI API，现有 SDK 只需改 `base_url`。
 - **容灾足够实用**：多 Provider、多 Key、Fallback、熔断器内置。
 
@@ -349,11 +354,21 @@ curl -X POST https://你的项目.vercel.app/v1/messages \
 ## 🏗️ 架构概览
 
 ```
+Vercel 部署:
 Client → Edge Runtime (全球分发, <50ms 延迟)
               ├─ 熔断器
               ├─ 多级 Fallback (Provider → Key)
               ├─ Key 轮换 (Round-Robin + 429 退避)
               └─ Upstash Redis (密钥, 配额, 用量)
+
+Cloudflare 部署:
+Client → CF Pages Worker (全球分发, <50ms 延迟)
+              ├─ 熔断器
+              ├─ 多级 Fallback (Provider → Key)
+              ├─ Key 轮换 (Round-Robin + 429 退避)
+              ├─ Cloudflare KV (密钥, 配额)
+              ├─ Cloudflare D1 (用量统计)
+              └─ CF Cron Triggers (定时任务)
 ```
 
 ## 📊 Admin 后台

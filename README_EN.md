@@ -2,11 +2,11 @@
 
 <img src="docs/assets/logo-banner.svg" alt="AI Relay" width="400">
 
-**Serverless AI API Relay Gateway — deploy to Vercel in one click and run your own multi-provider AI gateway in 2 minutes**
+**Serverless AI API Relay Gateway — one-click deploy to Vercel, or automated deploy to Cloudflare via GitHub Actions**
 
 <h3>🚀 <a href="https://vercel.com/new/clone?repository-url=https://github.com/MoyuFamily/ai-relay&env=RELAY_API_KEY,RELAY_ADMIN_KEY,RELAY_SIGNING_SECRET&envDescription=API%20authentication%20keys%20(required%20for%20security)&envLink=https://github.com/MoyuFamily/ai-relay#environment-variables">Deploy to Vercel in one click and launch your AI API gateway in 2 minutes</a></h3>
 
-<p>No server, no Docker, no backend ops. Set 3 environment variables and run your own multi-provider AI Relay.</p>
+<p>No server, no Docker, no backend ops. Vercel one-click deploy; Cloudflare via GitHub Actions push-to-deploy.</p>
 
 <p>
   <a href="https://vercel.com/new/clone?repository-url=https://github.com/MoyuFamily/ai-relay&env=RELAY_API_KEY,RELAY_ADMIN_KEY,RELAY_SIGNING_SECRET&envDescription=API%20authentication%20keys%20(required%20for%20security)&envLink=https://github.com/MoyuFamily/ai-relay#environment-variables">
@@ -28,15 +28,15 @@
 
 ---
 
-> 🚀 **No server, no Docker, no backend ops.**
+> 🚀 **No server, no Docker, no backend ops.** Vercel one-click; Cloudflare push-to-deploy via GitHub Actions.
 >
-> AI Relay runs on Vercel Edge Runtime. Click **Deploy with Vercel**, set 3 environment variables, and get your own serverless AI API relay gateway for OpenAI, Claude, DeepSeek, and custom providers.
+> Click **Deploy with Vercel** for instant launch, or fork and push to deploy on Cloudflare with D1 + KV auto-configuration.
 
 | What you care about | AI Relay's answer |
 |---|---|
-| **How do I deploy it?** | Click Deploy with Vercel, set 3 environment variables, and launch in about 2 minutes |
+| **How do I deploy it?** | Vercel: one-click deploy; Cloudflare: fork → configure GitHub Secrets → push to main, GitHub Actions handles the rest |
 | **Do I need a server?** | No VPS, no Docker, no backend operations |
-| **Can it start free?** | Built for Vercel Edge + KV, friendly to personal and small-team free-tier usage; Upstash free tier offers 500K KV operations/month, with sampling enabled the request-to-KV ratio can drop to ~1:1 |
+| **Can it start free?** | Vercel + Upstash free tier (500K KV ops/month); Cloudflare free tier (D1 5M reads + KV 100K ops/day); with sampling enabled, request-to-KV ratio drops to ~1:1 |
 | **Is integration hard?** | Keep the OpenAI SDK, change only `base_url`, and keep using `/v1/chat/completions` |
 
 ## Table of Contents
@@ -59,9 +59,9 @@
 
 | Feature | Description |
 |---------|-------------|
-| **Serverless Architecture** | Built on Vercel Edge Runtime — no VPS, no Docker, no backend ops |
-| **One-Click Deploy** | Click Deploy with Vercel, set 3 environment variables, and launch in about 2 minutes |
-| **Free Tier Friendly** | Personal developers and small teams can start on Vercel's free tier |
+| **Serverless Architecture** | Vercel Edge Runtime or Cloudflare Pages Workers — no VPS, no Docker, no backend ops |
+| **One-Click Deploy** | Vercel: one-click Deploy button; Cloudflare: fork + configure Secrets + push to main, GitHub Actions auto-deploys |
+| **Free Tier Friendly** | Vercel + Upstash free tier; Cloudflare free tier (D1 5M reads + KV 100K ops/day) |
 | **OpenAI Compatible** | Drop-in replacement for the OpenAI SDK |
 | **Multi-Provider Routing** | OpenAI · Claude · DeepSeek · MiMo · Custom |
 | **Multi-Key Rotation** | Round-Robin with automatic 429 backoff |

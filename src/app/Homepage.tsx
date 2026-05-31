@@ -40,17 +40,17 @@ const content = {
       admin: '管理后台',
     },
     hero: {
-      badge: 'Serverless · One-click Vercel deploy · OpenAI 兼容',
+      badge: 'Serverless · Vercel 一键部署 · Cloudflare 推送即部署 · OpenAI 兼容',
       title: 'AI Relay',
-      subtitle: '无服务器 AI API 中转网关，一键部署到 Vercel',
-      description: '不用买服务器、不用维护 Docker，点击 Deploy with Vercel，填写 3 个环境变量，2 分钟拥有自己的多 Provider AI Relay。现有 OpenAI SDK 只改 base_url，即可获得 Key 轮换、Fallback、用量统计和 Admin 后台。',
+      subtitle: '无服务器 AI API 中转网关，Vercel 一键部署 / Cloudflare 推送即部署',
+      description: '不用买服务器、不用维护 Docker。Vercel 一键部署即开即用；Cloudflare 通过 GitHub Actions 推送即部署，自动配置 D1 + KV。填写 3 个环境变量，2 分钟拥有自己的多 Provider AI Relay。现有 OpenAI SDK 只改 base_url，即可获得 Key 轮换、Fallback、用量统计和 Admin 后台。',
       quickstart: '2 分钟部署',
       github: 'GitHub',
-      deploy: '一键部署到 Vercel',
+      deploy: '一键部署',
     },
     stats: [
       { value: '0', label: '服务器运维' },
-      { value: '1-click', label: 'Vercel 部署' },
+      { value: '1-click', label: 'Vercel / CF 部署' },
       { value: '2 min', label: '上线可用' },
     ],
     sections: {
@@ -78,7 +78,7 @@ const content = {
       { icon: '↪', title: '多级 Fallback', description: 'Provider 到 Key Pool 的链式故障转移，让上游异常不直接暴露给客户端。', tier: 'p0' },
       { icon: '▣', title: '100% OpenAI 兼容', description: '保留 /v1/chat/completions 与 /v1/models 习惯，现有 SDK 几乎零改动接入。', tier: 'p0' },
       { icon: '▤', title: 'Admin 后台', description: '集中管理密钥、配额、用量统计、模型测试和 Provider 配置。', tier: 'p0' },
-      { icon: '⚡', title: '一键部署', description: '面向 Vercel Edge Runtime 设计，免费层也能快速跑起个人或团队中转站。', tier: 'p0' },
+      { icon: '⚡', title: '一键部署', description: 'Vercel 一键部署即开即用，Cloudflare 通过 GitHub Actions 推送即部署。免费层也能快速跑起个人或团队中转站。', tier: 'p0' },
       { icon: '≋', title: '流式响应', description: 'SSE 透明透传，兼容实时输出、长文本生成和 Agent 工具调用。', tier: 'p1' },
       { icon: '◈', title: 'Webhook 通知', description: '支持企微、飞书、钉钉、Slack，推送日报、异常和额度告警。', tier: 'p1' },
       { icon: '◇', title: '临时 API Key', description: 'HMAC 签名的无状态临时密钥，可设置过期时间和调用配额。', tier: 'p1' },
@@ -93,8 +93,8 @@ const content = {
     quickstartSteps: [
       {
         title: '部署',
-        description: '用 Vercel 克隆仓库，填入 RELAY_API_KEY、RELAY_ADMIN_KEY、RELAY_SIGNING_SECRET。',
-        label: 'Vercel',
+        description: 'Vercel 一键克隆部署；Cloudflare Fork 后配置 GitHub Secrets，push to main 自动部署。填入 RELAY_API_KEY、RELAY_ADMIN_KEY、RELAY_SIGNING_SECRET。',
+        label: 'Vercel / CF',
         code: 'RELAY_API_KEY=your-strong-client-key\nRELAY_ADMIN_KEY=your-admin-key\nRELAY_SIGNING_SECRET=your-signing-secret',
       },
       {
@@ -146,7 +146,7 @@ const content = {
     footer: {
       version: 'AI Relay v2.3',
       license: 'MIT License',
-      powered: 'Powered by Vercel Edge + KV',
+      powered: 'Powered by Edge Runtime (Vercel / Cloudflare)',
       docs: '文档',
     },
   },
@@ -160,17 +160,17 @@ const content = {
       admin: 'Admin',
     },
     hero: {
-      badge: 'Serverless · One-click Vercel deploy · OpenAI-compatible',
+      badge: 'Serverless · Vercel one-click · Cloudflare push-to-deploy · OpenAI-compatible',
       title: 'AI Relay',
-      subtitle: 'Serverless AI API relay gateway, one-click deploy to Vercel',
-      description: 'No VPS, no Docker, no backend ops. Click Deploy with Vercel, set 3 environment variables, and run your own multi-provider AI Relay in 2 minutes. Keep your OpenAI SDK and only change base_url to get key rotation, fallback, usage tracking, and an Admin console.',
+      subtitle: 'Serverless AI API relay gateway — Vercel one-click / Cloudflare push-to-deploy',
+      description: 'No VPS, no Docker, no backend ops. Vercel: one-click deploy and go. Cloudflare: fork, configure GitHub Secrets, push to main — GitHub Actions auto-deploys with D1 + KV. Set 3 environment variables and run your own multi-provider AI Relay in 2 minutes. Keep your OpenAI SDK and only change base_url to get key rotation, fallback, usage tracking, and an Admin console.',
       quickstart: 'Deploy in 2 minutes',
       github: 'GitHub',
-      deploy: 'Deploy to Vercel',
+      deploy: 'One-click deploy',
     },
     stats: [
       { value: '0', label: 'Server ops' },
-      { value: '1-click', label: 'Vercel deploy' },
+      { value: '1-click', label: 'Vercel / CF deploy' },
       { value: '2 min', label: 'Ready to use' },
     ],
     sections: {
@@ -198,7 +198,7 @@ const content = {
       { icon: '↪', title: 'Multi-level fallback', description: 'Chained Provider and Key Pool failover keeps upstream faults away from client code.', tier: 'p0' },
       { icon: '▣', title: '100% OpenAI-compatible', description: 'Keep /v1/chat/completions and /v1/models semantics, with almost no SDK changes.', tier: 'p0' },
       { icon: '▤', title: 'Admin console', description: 'Manage keys, quotas, usage analytics, model tests, and Provider configuration in one place.', tier: 'p0' },
-      { icon: '⚡', title: 'One-click deploy', description: 'Built for Vercel Edge Runtime, practical for personal or team relays on the free tier.', tier: 'p0' },
+      { icon: '⚡', title: 'One-click deploy', description: 'Vercel: one-click deploy and go. Cloudflare: fork + configure Secrets + push to main. Practical for personal or team relays on the free tier.', tier: 'p0' },
       { icon: '≋', title: 'Streaming pass-through', description: 'Transparent SSE forwarding for realtime output, long generations, and tool calling.', tier: 'p1' },
       { icon: '◈', title: 'Webhook alerts', description: 'Send daily reports, incidents, and quota alerts to WeCom, Feishu, DingTalk, or Slack.', tier: 'p1' },
       { icon: '◇', title: 'Temporary API keys', description: 'Stateless HMAC-signed keys with expiration windows and quota limits.', tier: 'p1' },
@@ -213,8 +213,8 @@ const content = {
     quickstartSteps: [
       {
         title: 'Deploy',
-        description: 'Clone to Vercel and set RELAY_API_KEY, RELAY_ADMIN_KEY, and RELAY_SIGNING_SECRET.',
-        label: 'Vercel',
+        description: 'Vercel: one-click clone deploy. Cloudflare: fork, configure GitHub Secrets, push to main for auto-deploy. Set RELAY_API_KEY, RELAY_ADMIN_KEY, and RELAY_SIGNING_SECRET.',
+        label: 'Vercel / CF',
         code: 'RELAY_API_KEY=your-strong-client-key\nRELAY_ADMIN_KEY=your-admin-key\nRELAY_SIGNING_SECRET=your-signing-secret',
       },
       {
@@ -266,7 +266,7 @@ const content = {
     footer: {
       version: 'AI Relay v2.3',
       license: 'MIT License',
-      powered: 'Powered by Vercel Edge + KV',
+      powered: 'Powered by Edge Runtime (Vercel / Cloudflare)',
       docs: 'Docs',
     },
   },

@@ -5,7 +5,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: 'AI Relay — Serverless AI API Relay Gateway',
-  description: '无服务器 AI API 中转网关，一键部署到 Vercel，2 分钟拥有多 Provider 路由、Key 轮换、Fallback、Admin 后台与用量追踪。',
+  description: '无服务器 AI API 中转网关。Vercel 一键部署；Cloudflare 通过 GitHub Actions 推送即部署。2 分钟拥有多 Provider 路由、Key 轮换、Fallback、Admin 后台与用量追踪。',
   icons: {
     icon: '/favicon.svg',
   },
