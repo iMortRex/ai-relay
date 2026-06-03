@@ -10,6 +10,7 @@ import { RelayError } from '@/lib/errors';
 import { createUsageEvent, getBatchRecorder } from '@/lib/usage';
 import { createUsageStorage } from '@/lib/usage/factory';
 import { recordRequestLog } from '@/lib/observability/request-logs';
+import { chunkHasUsage, jsonStringFieldLength } from '@/lib/usage/stream-usage';
 import type { AnthropicMessagesRequest } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -142,8 +143,20 @@ function wrapAnthropicStreamWithUsageTracking(
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+
+        // Fast path: skip JSON.parse for content_block_delta chunks (the bulk
+        // of a large generation). Usage lives only in message_start /
+        // message_delta, which always carry a *_tokens field.
+        if (!chunkHasUsage(data)) {
+          if (!lastUsage?.output_tokens) {
+            accumulatedContentChars += jsonStringFieldLength(data, 'text');
+          }
+          continue;
+        }
+
         try {
-          const parsed = JSON.parse(trimmed.slice(6));
+          const parsed = JSON.parse(data);
           if (parsed.type === 'message_start' && parsed.message?.usage) {
             lastUsage = {
               input_tokens: parsed.message.usage.input_tokens,
@@ -155,9 +168,6 @@ function wrapAnthropicStreamWithUsageTracking(
               input_tokens: lastUsage?.input_tokens,
               output_tokens: parsed.usage.output_tokens,
             };
-          }
-          if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-            accumulatedContentChars += parsed.delta.text.length;
           }
         } catch {
           // Ignore non-JSON SSE payloads.

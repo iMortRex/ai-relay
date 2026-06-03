@@ -15,6 +15,7 @@ import { RelayError } from '@/lib/errors';
 import { createUsageEvent, getBatchRecorder } from '@/lib/usage';
 import { createUsageStorage } from '@/lib/usage/factory';
 import { recordRequestLog } from '@/lib/observability/request-logs';
+import { chunkHasUsage, jsonStringFieldLength } from '@/lib/usage/stream-usage';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -114,39 +115,42 @@ function wrapStreamWithUsageTracking(
 
       for (const line of lines) {
         const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6).trim();
+        if (data === '[DONE]') continue;
 
-        // OpenAI format: `data: {...}` with usage field
-        if (trimmed.startsWith('data: ')) {
-          const data = trimmed.slice(6).trim();
-          if (data === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.usage) {
-              lastUsage = parsed.usage;
-            }
-            // Accumulate content for fallback estimation
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              accumulatedContentChars += content.length;
-            }
-
-            if (providerName === 'anthropic') {
-              if (parsed.type === 'message_delta' && parsed.usage) {
-                lastUsage = {
-                  prompt_tokens: parsed.usage.input_tokens || 0,
-                  completion_tokens: parsed.usage.output_tokens || 0,
-                };
-              }
-              // Anthropic content_block_delta
-              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                accumulatedContentChars += parsed.delta.text.length;
-              }
-            }
-          } catch {
-            // Not valid JSON, skip
+        // Fast path: usage data only ever lives in chunks carrying a
+        // *_tokens field. For the thousands of content-delta chunks in a
+        // large generation, skip JSON.parse entirely and just measure the
+        // delta length via a substring scan — this is what keeps the worker
+        // under Cloudflare's CPU-time budget on big (code) responses.
+        if (!chunkHasUsage(data)) {
+          if (lastUsage) continue; // already have real usage; fallback unneeded
+          if (providerName === 'anthropic') {
+            // content_block_delta → { delta: { text } }
+            accumulatedContentChars += jsonStringFieldLength(data, 'text');
+          } else {
+            // chat.completion.chunk → choices[].delta.content
+            accumulatedContentChars += jsonStringFieldLength(data, 'content');
           }
+          continue;
         }
 
+        // Slow path: rare, only for usage-bearing chunks.
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.usage) {
+            lastUsage = parsed.usage;
+          }
+          if (providerName === 'anthropic' && parsed.type === 'message_delta' && parsed.usage) {
+            lastUsage = {
+              prompt_tokens: parsed.usage.input_tokens || 0,
+              completion_tokens: parsed.usage.output_tokens || 0,
+            };
+          }
+        } catch {
+          // Not valid JSON, skip
+        }
       }
     },
     cancel() {

@@ -15,6 +15,7 @@ import { RelayError } from '@/lib/errors';
 import { createUsageEvent } from '@/lib/usage';
 import { createUsageStorage } from '@/lib/usage/factory';
 import { recordRequestLog } from '@/lib/observability/request-logs';
+import { chunkHasUsage, jsonStringFieldLength } from '@/lib/usage/stream-usage';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -210,17 +211,24 @@ function wrapStreamWithUsageTracking(
         if (trimmed.startsWith('data: ')) {
           const data = trimmed.slice(6).trim();
           if (data === '[DONE]') continue;
+
+          // Fast path: response.output_text.delta chunks (the bulk of a large
+          // generation) never carry token usage. Skip JSON.parse and measure
+          // the delta length with a substring scan to stay under Cloudflare's
+          // CPU-time budget. Usage lives only in chunks with a *_tokens field.
+          if (!chunkHasUsage(data)) {
+            if (!lastUsage) {
+              accumulatedContentChars += jsonStringFieldLength(data, 'delta');
+            }
+            continue;
+          }
+
           try {
             const parsed = JSON.parse(data);
 
             // Responses API usage fields
             if (parsed.usage) {
               lastUsage = parsed.usage;
-            }
-
-            // Accumulate content from output text deltas
-            if (parsed.type === 'response.output_text.delta' && typeof parsed.delta === 'string') {
-              accumulatedContentChars += parsed.delta.length;
             }
 
             // Also handle response.completed which may have final usage
