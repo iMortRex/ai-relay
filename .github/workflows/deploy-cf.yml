@@ -58,11 +58,20 @@ jobs:
 
           # ─── D1 Database ───────────────────────────────────────────
           echo "=== Provisioning D1 database ==="
-          DATABASE_ID=$(pnpm exec wrangler d1 list --json | jq -r '.[] | select(.name == "ai-relay") | .uuid' || echo "")
+          # wrangler d1 list supports --json; fall back gracefully
+          D1_LIST_OUT=$(pnpm exec wrangler d1 list --json 2>/dev/null || pnpm exec wrangler d1 list 2>/dev/null || echo "[]")
+          DATABASE_ID=$(echo "$D1_LIST_OUT" | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
+          # Fallback: grep UUID from plain-text output
+          if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
+            DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
+          fi
 
           if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
             echo "Creating D1 database: ai-relay"
-            DATABASE_ID=$(pnpm exec wrangler d1 create ai-relay --json | jq -r '.uuid')
+            # wrangler d1 create 部分版本不支持 --json，用正则从文本输出提取 UUID
+            CREATE_OUT=$(pnpm exec wrangler d1 create ai-relay 2>&1 || true)
+            echo "$CREATE_OUT"
+            DATABASE_ID=$(echo "$CREATE_OUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
           else
             echo "D1 database already exists"
           fi
