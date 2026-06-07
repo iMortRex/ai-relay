@@ -8,6 +8,17 @@
 
 （暂无）
 
+## [2.11.1] - 2026-06-07
+
+### Added
+- **FAQ 文档**：新增常见问题文档 `docs/FAQ.md`，并在 README 中添加链接，方便用户自助排查问题。
+
+### Fixed
+- **Cloudflare 部署锚点导航**：修复 Cloudflare 部署详情 `<details>` 标签缺少 id 属性导致锚点链接无法跳转的问题。
+
+### Changed
+- **CI 手动触发部署**：启用 Cloudflare Pages 工作流的手动触发功能（`workflow_dispatch`）。
+
 ## [2.11.0] - 2026-06-04
 
 ### Added

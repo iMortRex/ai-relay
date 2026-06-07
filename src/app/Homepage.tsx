@@ -144,7 +144,7 @@ const content = {
       notes: ['OpenAI 兼容请求进入 Relay', '按模型前缀选择 Provider', 'Key Pool 轮换、退避、Fallback', '用量、错误与配置写入 KV'],
     },
     footer: {
-      version: 'AI Relay v2.11.0',
+      version: 'AI Relay v2.11.1',
       license: 'MIT License',
       powered: 'Powered by Edge Runtime (Vercel / Cloudflare)',
       docs: '文档',
@@ -264,7 +264,7 @@ const content = {
       notes: ['OpenAI-compatible requests enter Relay', 'Model prefixes select the Provider', 'Key Pool rotates, backs off, and falls back', 'Usage, errors, and config persist to KV'],
     },
     footer: {
-      version: 'AI Relay v2.11.0',
+      version: 'AI Relay v2.11.1',
       license: 'MIT License',
       powered: 'Powered by Edge Runtime (Vercel / Cloudflare)',
       docs: 'Docs',
