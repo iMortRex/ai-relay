@@ -187,7 +187,12 @@ export function createMemoryMockKV() {
   return result;
 }
 
-async function getKV() {
+/**
+ * Get KV client for the current environment.
+ * Supports Cloudflare Pages KV binding, Vercel KV REST API, and in-memory mock for dev/test.
+ * Exported for reuse by other modules that need environment-agnostic KV access (e.g. smart-routing).
+ */
+export async function getKV() {
   const g = global as any;
 
   // Cloudflare Pages: use CF KV binding via CFKVAdapter

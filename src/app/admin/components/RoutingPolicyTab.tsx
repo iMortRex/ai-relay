@@ -5,6 +5,7 @@ import type { AdminData, PriorityRule, PriorityRuleConflict } from '../types';
 import PriorityRulesTab from './PriorityRulesTab';
 import RoutingTab from './RoutingTab';
 import FallbackChainEditor from './FallbackChainEditor';
+import HelpIcon from './HelpIcon';
 import { useFallbackPolicy } from '../useFallbackPolicy';
 
 interface RoutingPolicyTabProps {
@@ -251,9 +252,12 @@ export default function RoutingPolicyTab(props: RoutingPolicyTabProps) {
       {mode === 'smart' && (
         <>
           <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#e5e7eb' }}>
-              {t.routingSmartSectionTitle}
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#e5e7eb' }}>
+                {t.routingSmartSectionTitle}
+              </h3>
+              <HelpIcon tooltip={t.smartRoutingHelp} align="left" />
+            </div>
           </div>
 
           <RoutingTab apiKey={apiKey} lang={lang} />

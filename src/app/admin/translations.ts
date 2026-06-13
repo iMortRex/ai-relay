@@ -351,6 +351,16 @@ export const TRANSLATIONS = {
     routingTraditionalFallbackTitle: '🔗 供应商故障转移',
     routingTraditionalFallbackDesc: '无匹配优先级规则时的兜底故障转移链',
     routingSmartSectionTitle: '智能路由配置',
+    smartRoutingHelp: `智能路由会在支持当前模型的供应商之间，根据延迟、成本或可用性自动选择最优供应商。
+
+启用后：
+✅ 仅评估支持该模型的供应商
+✅ 基于实时指标动态选择主供应商
+✅ 自带智能故障转移链（单次请求内可切换）
+
+注意：
+⚠️ 与「优先级规则 + 故障转移链」互斥
+⚠️ 启用智能路由后，上述两项配置将被忽略`,
 
     msgKeyAdded: 'API 密钥添加成功',
     msgKeysAddedBatch: '批量添加完成：新增 {added} 个，重复 {duplicates} 个，当前共 {total} 个。',
@@ -718,6 +728,16 @@ Note:
     routingTraditionalFallbackTitle: '🔗 Provider Fallback Chains',
     routingTraditionalFallbackDesc: 'Fallback chains used when no priority rule matches',
     routingSmartSectionTitle: 'Smart Routing Configuration',
+    smartRoutingHelp: `Smart routing automatically selects the optimal provider — among those supporting the requested model — based on latency, cost, or availability.
+
+When enabled:
+✅ Only evaluates providers that support the model
+✅ Dynamically picks the primary provider from real-time metrics
+✅ Includes an intelligent failover chain (can switch within a single request)
+
+Note:
+⚠️ Mutually exclusive with "Priority Rules + Fallback Chain"
+⚠️ When enabled, those two configs are ignored`,
 
     msgKeyAdded: 'API Key added successfully',
     msgKeysAddedBatch: 'Bulk add complete: {added} added, {duplicates} duplicates, {total} total.',

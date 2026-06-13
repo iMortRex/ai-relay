@@ -17,9 +17,15 @@ export class CFKVAdapter {
     try { return JSON.parse(raw); } catch { return raw; }
   }
 
-  async set(key: string, value: any): Promise<string> {
+  async set(key: string, value: any, options?: { ex?: number }): Promise<string> {
     const str = typeof value === 'string' ? value : JSON.stringify(value);
-    await this.kv.put(key, str);
+    // Honor Vercel-KV-style `{ ex: seconds }` TTL via CF KV's expirationTtl.
+    // CF KV requires expirationTtl >= 60; smaller values are dropped (no expiry).
+    if (options?.ex && options.ex >= 60) {
+      await this.kv.put(key, str, { expirationTtl: options.ex });
+    } else {
+      await this.kv.put(key, str);
+    }
     return 'OK';
   }
 

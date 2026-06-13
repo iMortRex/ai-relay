@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import HelpIcon from './HelpIcon';
 
 // ============================================================
 // Types (mirror smart-routing/types.ts for client-side)
@@ -66,9 +65,7 @@ interface RoutingTabProps {
 
 const T = {
   zh: {
-    title: '⚡ 智能路由',
     loading: '加载中...',
-    error: '请求失败',
     retry: '重试',
     noData: '暂无路由数据',
 
@@ -81,13 +78,10 @@ const T = {
     availability: '可用性优先',
     availabilityDesc: '优先保证服务可用',
     currentStrategy: '当前策略',
-    switchStrategy: '切换策略',
     strategySwitched: '策略已切换',
 
     // Topology
     topology: '路由拓扑',
-    provider: 'Provider',
-    status: '状态',
     latency_label: '延迟',
     successRate: '成功率',
     failures: '连续失败',
@@ -98,22 +92,6 @@ const T = {
     unknown: '未知',
     resetFailures: '重置失败计数',
     resetSuccess: '失败计数已重置',
-
-    // Master switch
-    smartRoutingMode: '智能路由模式',
-    enabled: '已启用',
-    disabled: '已禁用',
-    smartRoutingHelp: `智能路由会在支持当前模型的供应商之间，根据延迟、成本或可用性自动选择最优供应商。
-
-启用后：
-✅ 仅评估支持该模型的供应商
-✅ 基于实时指标动态选择主供应商
-✅ 自带智能故障转移链（单次请求内可切换）
-
-注意：
-⚠️ 与「优先级规则 + 故障转移链」互斥
-⚠️ 启用智能路由后，上述两项配置将被忽略`,
-    smartRoutingWarning: '智能路由已启用，优先级规则与故障转移链配置将被忽略，路由完全由智能策略接管。',
 
     // Config
     config: '路由配置',
@@ -136,22 +114,14 @@ const T = {
     // Switches
     recentSwitches: '最近路由切换',
     noSwitches: '暂无切换记录',
-    from: '从',
-    to: '到',
-    reason: '原因',
 
     // Status overlay
     activeRouting: '当前活跃路由',
     totalRequests: '总请求数',
     uptime: '运行时长',
-
-    // Mobile
-    providerList: 'Provider 列表',
   },
   en: {
-    title: '⚡ Smart Routing',
     loading: 'Loading...',
-    error: 'Request Failed',
     retry: 'Retry',
     noData: 'No routing data',
 
@@ -163,12 +133,9 @@ const T = {
     availability: 'Availability First',
     availabilityDesc: 'Prioritize service availability',
     currentStrategy: 'Current Strategy',
-    switchStrategy: 'Switch Strategy',
     strategySwitched: 'Strategy switched',
 
     topology: 'Routing Topology',
-    provider: 'Provider',
-    status: 'Status',
     latency_label: 'Latency',
     successRate: 'Success Rate',
     failures: 'Consecutive Failures',
@@ -179,22 +146,6 @@ const T = {
     unknown: 'Unknown',
     resetFailures: 'Reset Failures',
     resetSuccess: 'Failure counter reset',
-
-    // Master switch
-    smartRoutingMode: 'Smart Routing Mode',
-    enabled: 'Enabled',
-    disabled: 'Disabled',
-    smartRoutingHelp: `Smart routing automatically selects the optimal provider — among those supporting the requested model — based on latency, cost, or availability.
-
-When enabled:
-✅ Only evaluates providers that support the model
-✅ Dynamically picks the primary provider from real-time metrics
-✅ Includes an intelligent failover chain (can switch within a single request)
-
-Note:
-⚠️ Mutually exclusive with "Priority Rules + Fallback Chain"
-⚠️ When enabled, those two configs are ignored`,
-    smartRoutingWarning: 'Smart routing is enabled. Priority rules and fallback chain configs are ignored — routing is fully managed by the smart strategy.',
 
     config: 'Routing Config',
     failureThreshold: 'Failover Threshold',
@@ -215,15 +166,10 @@ Note:
 
     recentSwitches: 'Recent Switches',
     noSwitches: 'No switch records',
-    from: 'From',
-    to: 'To',
-    reason: 'Reason',
 
     activeRouting: 'Active Routing',
     totalRequests: 'Total Requests',
     uptime: 'Uptime',
-
-    providerList: 'Provider List',
   },
 };
 
@@ -432,58 +378,48 @@ export default function RoutingTab({ apiKey, lang }: RoutingTabProps) {
 
   return (
     <div>
-      {/* Master enable switch — smart routing is mutually exclusive with
-          priority rules + traditional fallback. */}
-      <MasterSwitch
-        enabled={config.enabled}
-        onToggle={(enabled) => saveConfig({ enabled })}
+      {/* Smart routing is active whenever this tab is shown — the routing-mode
+          selector (traditional vs. smart) above already persists config.enabled,
+          so there is no separate enable switch here. */}
+
+      {/* Status overlay bar */}
+      <StatusBar status={status} t={t} />
+
+      {/* Strategy Selector */}
+      <StrategySelector
+        current={config.strategy}
+        onSwitch={switchStrategy}
         saving={saving}
         t={t}
       />
 
-      {/* Everything below only applies while smart routing is enabled. */}
-      {config.enabled && (
-        <>
-          {/* Status overlay bar */}
-          <StatusBar status={status} t={t} />
+      {/* Two-column layout: Topology + Config */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+        gap: '1.5rem',
+        marginTop: '1.5rem',
+      }} className="routing-grid">
+        {/* Provider Topology */}
+        <ProviderTopology
+          providers={status?.activeProviders || []}
+          onResetFailures={resetFailures}
+          t={t}
+        />
 
-          {/* Strategy Selector */}
-          <StrategySelector
-            current={config.strategy}
-            onSwitch={switchStrategy}
+        {/* Config Editor + Recent Switches */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <ConfigEditor
+            config={config}
+            editConfig={editConfig}
+            setEditConfig={setEditConfig}
+            onSave={saveConfig}
             saving={saving}
             t={t}
           />
-
-          {/* Two-column layout: Topology + Config */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-            gap: '1.5rem',
-            marginTop: '1.5rem',
-          }} className="routing-grid">
-            {/* Provider Topology */}
-            <ProviderTopology
-              providers={status?.activeProviders || []}
-              onResetFailures={resetFailures}
-              t={t}
-            />
-
-            {/* Config Editor + Recent Switches */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <ConfigEditor
-                config={config}
-                editConfig={editConfig}
-                setEditConfig={setEditConfig}
-                onSave={saveConfig}
-                saving={saving}
-                t={t}
-              />
-              <RecentSwitches switches={status?.recentSwitches || []} t={t} />
-            </div>
-          </div>
-        </>
-      )}
+          <RecentSwitches switches={status?.recentSwitches || []} t={t} />
+        </div>
+      </div>
 
       {/* Message */}
       {message && (
@@ -519,103 +455,16 @@ function btnStyle(bg: string): React.CSSProperties {
     padding: '0.5rem 1rem',
     borderRadius: '8px',
     border: 'none',
-    backgroundColor: bg,
+    // `background` (not `backgroundColor`) so callers can pass a gradient —
+    // the save button uses linear-gradient(...), which backgroundColor ignores,
+    // leaving the button transparent and the white label unreadable.
+    background: bg,
     color: '#fff',
     cursor: 'pointer',
     fontSize: '0.85rem',
     fontWeight: 500,
     transition: 'all 0.2s',
   };
-}
-
-// ---- Toggle Switch ----
-
-function ToggleSwitch({ checked, onChange, disabled }: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={() => !disabled && onChange(!checked)}
-      disabled={disabled}
-      style={{
-        width: '48px',
-        height: '26px',
-        borderRadius: '13px',
-        border: 'none',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        background: checked
-          ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)'
-          : 'rgba(255, 255, 255, 0.1)',
-        position: 'relative',
-        transition: 'background 0.2s',
-        opacity: disabled ? 0.5 : 1,
-      }}
-    >
-      <div style={{
-        width: '20px',
-        height: '20px',
-        borderRadius: '50%',
-        background: '#fff',
-        position: 'absolute',
-        top: '3px',
-        left: checked ? '25px' : '3px',
-        transition: 'left 0.2s',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-      }} />
-    </button>
-  );
-}
-
-// ---- Master Switch ----
-
-function MasterSwitch({ enabled, onToggle, saving, t }: {
-  enabled: boolean;
-  onToggle: (enabled: boolean) => void;
-  saving: boolean;
-  t: typeof T['zh'];
-}) {
-  return (
-    <div className="glass-panel" style={{ marginBottom: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e5e7eb' }}>
-            {t.smartRoutingMode}
-          </h3>
-          <HelpIcon tooltip={t.smartRoutingHelp} />
-        </div>
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-          <span style={{ fontSize: '0.85rem', color: enabled ? '#34d399' : '#6b7280' }}>
-            {enabled ? t.enabled : t.disabled}
-          </span>
-          <ToggleSwitch
-            checked={enabled}
-            onChange={onToggle}
-            disabled={saving}
-          />
-        </label>
-      </div>
-
-      {enabled && (
-        <div style={{
-          marginTop: '0.75rem',
-          padding: '0.75rem',
-          borderRadius: '8px',
-          background: 'rgba(251, 191, 36, 0.1)',
-          border: '1px solid rgba(251, 191, 36, 0.2)',
-          color: '#fbbf24',
-          fontSize: '0.85rem',
-          display: 'flex',
-          gap: '0.5rem',
-        }}>
-          <span>⚠️</span>
-          <span>{t.smartRoutingWarning}</span>
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ---- Status Bar ----
