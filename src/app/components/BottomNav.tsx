@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react';
 import { BottomSheet } from './BottomSheet';
 
-export type TabId = 'setup' | 'overview' | 'keys' | 'models' | 'priority' | 'health' | 'routing' | 'security' | 'usage' | 'logs' | 'tools' | 'webhooks';
+export type TabId = 'setup' | 'overview' | 'keys' | 'models' | 'health' | 'routingPolicy' | 'security' | 'usage' | 'logs' | 'tools' | 'webhooks';
 
 interface NavItem {
   id: TabId;
@@ -28,10 +28,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'keys',    icon: '🔑', label: 'Key',    group: 'primary' },
   { id: 'health',  icon: '🏥', label: '健康',   group: 'primary' },
   { id: 'usage',   icon: '📈', label: '用量',   group: 'primary' },
-  { id: 'routing', icon: '🧭', label: '路由',   group: 'secondary' },
+  { id: 'routingPolicy', icon: '🧭', label: '路由策略', group: 'secondary' },
   { id: 'security', icon: '🛡️', label: '安全',   group: 'secondary' },
   { id: 'models',  icon: '🤖', label: '模型',   group: 'secondary' },
-  { id: 'priority', icon: '⚡', label: '优先级', group: 'secondary' },
   { id: 'logs',    icon: '📋', label: '日志',   group: 'secondary' },
   { id: 'tools',   icon: '🛠️', label: '工具',   group: 'secondary' },
   { id: 'webhooks', icon: '🔔', label: 'Webhook', group: 'secondary' },

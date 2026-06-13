@@ -6,16 +6,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { AdminData } from './types';
+import type { AdminData, ProviderFallbacks } from './types';
 import { buildImportedProviderConfig, parseProviderImportLink } from './provider-import';
-
-interface ProviderFallbacks {
-  current: string[];
-  staticDefault: string | null;
-  staticDefaults: string[];
-  isOverride: boolean;
-  availableModels: Record<string, { id: string; displayName: string }[]>;
-}
 
 export function useAdminHandlers(apiKey: string, t: any) {
   const [data, setData] = useState<AdminData | null>(null);

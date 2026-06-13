@@ -12,9 +12,8 @@ import ProviderHealthTab from './components/ProviderHealthTab';
 import UsageReportTab from './components/UsageReportTab';
 import RequestLogsTab from './components/RequestLogsTab';
 import ModelAliasesTab from './components/ModelAliasesTab';
-import PriorityRulesTab from './components/PriorityRulesTab';
 import SecurityTab from './components/SecurityTab';
-import RoutingTab from './components/RoutingTab';
+import RoutingPolicyTab from './components/RoutingPolicyTab';
 import CcSwitchImportButton from './components/CcSwitchImportButton';
 import { ErrorDetailPanel } from '../components/ErrorDetailPanel';
 import { BottomNav, type TabId } from '../components/BottomNav';
@@ -25,7 +24,7 @@ import { useAdminHandlers } from './adminHandlers';
 export default function AdminPage() {
   const [apiKey, setApiKey] = useState('');
   const [lang, setLang] = useState<'zh' | 'en'>('zh');
-  const [activeTab, setActiveTab] = useState<'setup' | 'overview' | 'keys' | 'models' | 'priority' | 'health' | 'routing' | 'security' | 'usage' | 'logs' | 'tools' | 'webhooks'>('setup');
+  const [activeTab, setActiveTab] = useState<TabId>('setup');
   const [setupData, setSetupData] = useState<any>(null);
   const [providerHealthData, setProviderHealthData] = useState<any>(null);
   const [priorityRules, setPriorityRules] = useState<PriorityRule[]>([]);
@@ -244,7 +243,7 @@ export default function AdminPage() {
     if (!authenticated) return;
     if (activeTab === 'setup') fetchSetup().catch((e) => setError(e instanceof Error ? e.message : String(e)));
     if (activeTab === 'health') fetchProviderHealth().catch((e) => setError(e instanceof Error ? e.message : String(e)));
-    if (activeTab === 'priority') fetchPriorityRules().catch((e) => setError(e instanceof Error ? e.message : String(e)));
+    if (activeTab === 'routingPolicy') fetchPriorityRules().catch((e) => setError(e instanceof Error ? e.message : String(e)));
     // logs tab manages its own data fetching + localStorage
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, activeTab]);
@@ -506,22 +505,16 @@ export default function AdminPage() {
           模型配置
         </button>
         <button
-          className={`tab-btn ${activeTab === 'priority' ? 'active' : ''}`}
-          onClick={() => setActiveTab('priority')}
-        >
-          ⚡ 优先级规则
-        </button>
-        <button
           className={`tab-btn ${activeTab === 'health' ? 'active' : ''}`}
           onClick={() => setActiveTab('health')}
         >
           {t.tabHealth}
         </button>
         <button
-          className={`tab-btn ${activeTab === 'routing' ? 'active' : ''}`}
-          onClick={() => setActiveTab('routing')}
+          className={`tab-btn ${activeTab === 'routingPolicy' ? 'active' : ''}`}
+          onClick={() => setActiveTab('routingPolicy')}
         >
-          {lang === 'zh' ? '⚡ 智能路由' : '⚡ Routing'}
+          🧭 {lang === 'zh' ? '路由策略' : 'Routing Policy'}
         </button>
         <button
           className={`tab-btn ${activeTab === 'security' ? 'active' : ''}`}
@@ -629,19 +622,6 @@ export default function AdminPage() {
             onRefreshData={() => fetchData(true)}
           />
         )}
-        {activeTab === 'priority' && (
-          <PriorityRulesTab
-            rules={priorityRules}
-            providers={data?.providers || []}
-            conflicts={priorityConflicts}
-            loading={v21Loading}
-            message={priorityMessage}
-            onReorderRules={reorderPriorityRulesFromTab}
-            onSaveRules={savePriorityRulesFromTab}
-            onAddRule={() => setPriorityMessage('')}
-            onDeleteRule={() => setPriorityMessage('')}
-          />
-        )}
         {activeTab === 'health' && (
           <ProviderHealthTab
             t={t}
@@ -650,14 +630,23 @@ export default function AdminPage() {
             onRefresh={() => fetchProviderHealth(true)}
           />
         )}
-        {activeTab === 'security' && (
-          <SecurityTab
+        {activeTab === 'routingPolicy' && (
+          <RoutingPolicyTab
             apiKey={apiKey}
             lang={lang}
+            t={t}
+            data={data!}
+            priorityRules={priorityRules}
+            priorityConflicts={priorityConflicts}
+            priorityMessage={priorityMessage}
+            onAddRule={() => setPriorityMessage('')}
+            onDeleteRule={() => setPriorityMessage('')}
+            onReorderRules={reorderPriorityRulesFromTab}
+            onSaveRules={savePriorityRulesFromTab}
           />
         )}
-        {activeTab === 'routing' && (
-          <RoutingTab
+        {activeTab === 'security' && (
+          <SecurityTab
             apiKey={apiKey}
             lang={lang}
           />

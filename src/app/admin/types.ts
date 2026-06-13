@@ -104,3 +104,18 @@ export interface PriorityRuleConflict {
   matchedModels: string[];
   message: string;
 }
+
+/**
+ * A provider's fallback chain configuration as returned by
+ * GET /api/admin/providers/{id}/fallbacks. `current` is the effective chain,
+ * `isOverride` indicates whether it comes from a KV override (vs. static
+ * registry defaults), and `availableModels` maps each candidate provider id to
+ * the models it can serve (used by the per-entry model selector).
+ */
+export interface ProviderFallbacks {
+  current: string[];
+  staticDefault: string | null;
+  staticDefaults: string[];
+  isOverride: boolean;
+  availableModels: Record<string, { id: string; displayName: string }[]>;
+}

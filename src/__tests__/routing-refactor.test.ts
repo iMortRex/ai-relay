@@ -77,7 +77,7 @@ describe('providerSupportsModel', () => {
     const p = provider({
       name: 'custom',
       modelPrefixes: ['unrelated-'],
-      models: [{ id: 'special-model-v1', displayName: 'Special' }],
+      models: [{ id: 'special-model-v1', displayName: 'Special', contextWindow: 128000 }],
     });
     expect(providerSupportsModel(p, 'special-model-v1')).toBe(true);
     expect(providerSupportsModel(p, 'other-model')).toBe(false);
