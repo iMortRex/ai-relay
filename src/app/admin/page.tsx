@@ -24,7 +24,14 @@ import { useAdminHandlers } from './adminHandlers';
 export default function AdminPage() {
   const [apiKey, setApiKey] = useState('');
   const [lang, setLang] = useState<'zh' | 'en'>('zh');
-  const [activeTab, setActiveTab] = useState<TabId>('setup');
+  // Default to 'overview' if user has configured admin key before; otherwise show 'setup' for first-time deployment
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    if (typeof window !== 'undefined') {
+      const hasConfigured = localStorage.getItem('airelay_admin_key');
+      return hasConfigured ? 'overview' : 'setup';
+    }
+    return 'setup';
+  });
   const [setupData, setSetupData] = useState<any>(null);
   const [providerHealthData, setProviderHealthData] = useState<any>(null);
   const [priorityRules, setPriorityRules] = useState<PriorityRule[]>([]);
