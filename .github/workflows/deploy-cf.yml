@@ -152,9 +152,9 @@ jobs:
           echo "KV namespaces found: $(echo "$KV_LIST" | jq 'length' 2>/dev/null || echo 'unknown')"
 
           # Search for existing namespace.
-          # Possible titles: wrangler may generate "KV", "ai-relay-KV", or legacy variants.
+          # Priority order: prefer "ai-relay" (historical data), then fallback to wrangler-generated variants.
           KV_ID=""
-          for TITLE in "KV" "ai-relay-KV" "ai-relay" "ai-relay-ai-relay"; do
+          for TITLE in "ai-relay" "ai-relay-KV" "KV" "ai-relay-ai-relay"; do
             FOUND=$(echo "$KV_LIST" | jq -r ".[] | select(.title == \"${TITLE}\") | .id" 2>/dev/null || echo "")
             if [ -n "$FOUND" ] && [ "$FOUND" != "null" ]; then
               KV_ID="$FOUND"
@@ -173,7 +173,7 @@ jobs:
               echo "Namespace already exists (title conflict); re-fetching list to obtain id..."
               KV_LIST=$(pnpm exec wrangler kv namespace list 2>/dev/null | awk '/^\[/{f=1} f' || echo "[]")
               [ -z "$KV_LIST" ] && KV_LIST="[]"
-              for TITLE in "KV" "ai-relay-KV" "ai-relay" "ai-relay-ai-relay"; do
+              for TITLE in "ai-relay" "ai-relay-KV" "KV" "ai-relay-ai-relay"; do
                 FOUND=$(echo "$KV_LIST" | jq -r ".[] | select(.title == \"${TITLE}\") | .id" 2>/dev/null || echo "")
                 if [ -n "$FOUND" ] && [ "$FOUND" != "null" ]; then
                   KV_ID="$FOUND"
