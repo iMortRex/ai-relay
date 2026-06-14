@@ -62,40 +62,76 @@ jobs:
 
           # ─── D1 Database ───────────────────────────────────────────
           echo "=== Provisioning D1 database ==="
-          # wrangler d1 list supports --json; fall back gracefully
-          D1_LIST_OUT=$(pnpm exec wrangler d1 list --json 2>/dev/null || pnpm exec wrangler d1 list 2>/dev/null || echo "[]")
+
+          # Try to get database ID from existing databases
+          echo "Fetching D1 database list..."
+          D1_LIST_OUT=$(pnpm exec wrangler d1 list --json 2>&1 || pnpm exec wrangler d1 list 2>&1 || echo "[]")
+          echo "D1 list output:"
+          echo "$D1_LIST_OUT" | head -20
+
+          # Try JSON parsing first
           DATABASE_ID=$(echo "$D1_LIST_OUT" | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
-          # Fallback: grep UUID from plain-text output
+
+          # Fallback: grep UUID from any format (JSON or plain text)
           if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
-            DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
+            echo "JSON parsing failed, trying regex extraction..."
+            # Look for ai-relay followed by UUID pattern
+            DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -A 5 -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
           fi
 
+          # If still not found, try creating it
           if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
-            echo "Creating D1 database: ai-relay"
-            # wrangler d1 create 部分版本不支持 --json，用正则从文本输出提取 UUID
+            echo "D1 database not found, attempting to create..."
             CREATE_OUT=$(pnpm exec wrangler d1 create ai-relay 2>&1 || true)
             echo "$CREATE_OUT"
+
+            # Extract UUID from create output
             DATABASE_ID=$(echo "$CREATE_OUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
 
-            # If create failed because the database already exists, re-fetch the list
-            if ([ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]) && echo "$CREATE_OUT" | grep -qi "already exists"; then
-              echo "Database already exists (name conflict); re-fetching list to obtain uuid..."
-              D1_LIST_OUT=$(pnpm exec wrangler d1 list --json 2>/dev/null || pnpm exec wrangler d1 list 2>/dev/null || echo "[]")
-              DATABASE_ID=$(echo "$D1_LIST_OUT" | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
-              if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
-                DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
+            # If creation failed because it exists, fetch the list again with more attempts
+            if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
+              if echo "$CREATE_OUT" | grep -qi "already exists\|name already in use"; then
+                echo "Database exists but UUID not found. Retrying fetch with verbose output..."
+                sleep 2  # Give Cloudflare API a moment
+
+                # Try multiple fetch attempts
+                for i in 1 2 3; do
+                  echo "Attempt $i to fetch database list..."
+                  D1_LIST_OUT=$(pnpm exec wrangler d1 list 2>&1 || echo "")
+                  echo "$D1_LIST_OUT"
+
+                  # Try all possible extraction methods
+                  DATABASE_ID=$(echo "$D1_LIST_OUT" | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
+                  if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
+                    DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -A 5 -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
+                  fi
+
+                  if [ -n "$DATABASE_ID" ] && [ "$DATABASE_ID" != "null" ]; then
+                    echo "✅ Found database UUID on attempt $i"
+                    break
+                  fi
+
+                  sleep 2
+                done
               fi
             fi
           else
-            echo "D1 database already exists"
+            echo "✅ D1 database already exists"
           fi
 
-          echo "D1 database_id: $DATABASE_ID"
+          echo ""
+          echo "D1 database_id: ${DATABASE_ID:-<empty>}"
 
           if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
-            echo "❌ Failed to obtain D1 database_id"
+            echo "❌ Failed to obtain D1 database_id after all attempts"
+            echo ""
+            echo "Debug information:"
+            echo "Last D1 list output:"
+            echo "$D1_LIST_OUT"
             exit 1
           fi
+
+          echo "✅ Successfully obtained D1 database_id: $DATABASE_ID"
 
           # Inject database_id into wrangler.toml
           if grep -q "database_id" wrangler.toml; then
