@@ -15,9 +15,19 @@ program
   .description('AI Relay Local Runtime CLI');
 
 program
-  .command('login <cloud-url>')
-  .description('Bind this device to a cloud admin instance')
-  .action(async (cloudUrl: string) => {
+  .command('login [cloud-url]')
+  .description('Bind this device to a cloud admin instance (optional)')
+  .action(async (cloudUrl?: string) => {
+    if (!cloudUrl) {
+      console.log('Cloud login is optional. You can also:');
+      console.log('  - Use local config: ai-relay local:start --config ./config.json');
+      console.log('  - Set environment: export RELAY_CONFIG_PATH=./config.json');
+      console.log('  - Use inline keys: export OPENAI_KEYS=sk-xxx');
+      console.log('\nFor cloud login, provide the URL:');
+      console.log('  ai-relay login <cloud-url>');
+      return;
+    }
+
     const { login } = await import('./local/login.js');
     await login(cloudUrl, { device_name: os.hostname(), platform: os.platform() });
   });
@@ -32,9 +42,20 @@ program
 program
   .command('local:start')
   .description('Start local relay server')
-  .action(async () => {
+  .option('-c, --config <source>', 'Config source (URL or file path)')
+  .option('-p, --port <port>', 'Listen port (default: 3147)')
+  .option('--host <host>', 'Listen host (default: 127.0.0.1)')
+  .action(async (options: { config?: string; port?: string; host?: string }) => {
     const { startCommand } = await import('./local/commands.js');
-    await startCommand();
+    await startCommand(options);
+  });
+
+program
+  .command('local:status')
+  .description('Show local relay status and configuration')
+  .action(async () => {
+    const { statusCommand } = await import('./local/commands.js');
+    await statusCommand();
   });
 
 program

@@ -4,74 +4,92 @@
 
 import * as http from 'http';
 import type { LocalProfile } from './profile';
+import type { ConfigSource } from '../lib/config-source';
+import type { ConfigSnapshot } from '../../src/lib/config-store/types';
+import { resolveConfigSource } from '../lib/config-resolver';
 
 export interface LocalServer {
   port: number;
   stop(): Promise<void>;
 }
 
-export interface ConfigSnapshot {
-  providers: Record<string, any>;
-  keys: Record<string, string[]>;
-  modelAliases: Record<string, string>;
-  priorityRules: any[];
+export interface StartServerOptions {
+  profile: LocalProfile;
+  configArg?: string;
+  configSource?: ConfigSource;
 }
 
-export async function startLocalServer(profile: LocalProfile): Promise<LocalServer> {
-  let configVersion = 0;
-  let config: ConfigSnapshot | null = null;
+export async function startLocalServer(options: StartServerOptions): Promise<LocalServer> {
+  const { profile, configArg, configSource: explicitSource } = options;
 
-  // Config sync loop
-  const configSyncInterval = setInterval(async () => {
-    try {
-      const versionRes = await fetch(`${profile.cloudUrl}/api/local/config/version`, {
-        headers: { Authorization: `Bearer ${profile.deviceToken}` },
-      });
-      const { version } = await versionRes.json();
+  // Resolve config source
+  const configSource = explicitSource || resolveConfigSource({
+    configArg,
+    profile,
+    env: process.env,
+  });
 
-      if (version > configVersion) {
-        const snapshotRes = await fetch(`${profile.cloudUrl}/api/local/config/snapshot`, {
-          headers: { Authorization: `Bearer ${profile.deviceToken}` },
-        });
-        config = await snapshotRes.json();
-        configVersion = version;
-        console.log(`✅ Config synced (v${version})`);
-      }
-    } catch (err) {
-      console.error('❌ Config sync failed:', (err as Error).message);
-    }
-  }, 30_000);
-
-  // Heartbeat loop
-  const heartbeatInterval = setInterval(async () => {
-    try {
-      await fetch(`${profile.cloudUrl}/api/local/usage/batch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${profile.deviceToken}`,
-        },
-        body: JSON.stringify({ events: [] }),
-      });
-    } catch (err) {
-      console.error('❌ Heartbeat failed:', (err as Error).message);
-    }
-  }, 60_000);
-
-  // Initial config fetch
-  try {
-    const versionRes = await fetch(`${profile.cloudUrl}/api/local/config/version`, {
-      headers: { Authorization: `Bearer ${profile.deviceToken}` },
-    });
-    const { version } = await versionRes.json();
-    const snapshotRes = await fetch(`${profile.cloudUrl}/api/local/config/snapshot`, {
-      headers: { Authorization: `Bearer ${profile.deviceToken}` },
-    });
-    config = await snapshotRes.json();
-    configVersion = version;
-  } catch (err) {
-    console.error('⚠️  Initial config fetch failed, will retry');
+  if (!configSource) {
+    throw new Error(
+      'No configuration source found. Please:\n' +
+      '  - Login: ai-relay login <cloud-url>\n' +
+      '  - Use config file: ai-relay local:start --config ./config.json\n' +
+      '  - Set environment: export RELAY_CONFIG_PATH=./config.json'
+    );
   }
+
+  console.log(`📋 Config source: ${configSource.describe()}`);
+
+  let config: ConfigSnapshot | null = null;
+  let configVersion = 0;
+
+  // Load initial config
+  try {
+    config = await configSource.load();
+    configVersion = config.version;
+    console.log(`✅ Config loaded (v${configVersion})`);
+  } catch (err) {
+    console.error('❌ Failed to load initial config:', (err as Error).message);
+    throw err;
+  }
+
+  // Setup config watching/syncing if supported
+  let configSyncInterval: NodeJS.Timeout | undefined;
+  if (configSource.watch) {
+    configSource.watch(async () => {
+      try {
+        const updated = await configSource.load();
+        if (updated.version > configVersion) {
+          config = updated;
+          configVersion = updated.version;
+          console.log(`✅ Config synced (v${configVersion})`);
+        }
+      } catch (err) {
+        console.error('❌ Config sync failed:', (err as Error).message);
+      }
+    });
+  }
+
+  // Heartbeat loop (only if connected to cloud)
+  let heartbeatInterval: NodeJS.Timeout | undefined;
+  if (profile.cloudUrl && profile.deviceToken) {
+    heartbeatInterval = setInterval(async () => {
+      try {
+        await fetch(`${profile.cloudUrl}/api/local/usage/batch`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${profile.deviceToken}`,
+          },
+          body: JSON.stringify({ events: [] }),
+        });
+      } catch (err) {
+        console.error('❌ Heartbeat failed:', (err as Error).message);
+      }
+    }, 60_000);
+  }
+
+  // HTTP server
 
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -104,8 +122,16 @@ export async function startLocalServer(profile: LocalProfile): Promise<LocalServ
       resolve({
         port: profile.listenPort,
         async stop() {
-          clearInterval(configSyncInterval);
-          clearInterval(heartbeatInterval);
+          // Clear intervals
+          if (configSyncInterval) clearInterval(configSyncInterval);
+          if (heartbeatInterval) clearInterval(heartbeatInterval);
+
+          // Dispose config source if it supports disposal
+          if ('dispose' in configSource && typeof configSource.dispose === 'function') {
+            (configSource as any).dispose();
+          }
+
+          // Close HTTP server
           return new Promise((resolve) => server.close(() => resolve()));
         },
       });
