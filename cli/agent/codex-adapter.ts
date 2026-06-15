@@ -2,7 +2,7 @@
 // AI Relay CLI — Codex Agent Adapter
 // ============================================================
 
-import type { AgentAdapter, InstallOptions, InstallResult, DoctorResult } from './adapter';
+import type { AgentAdapter, InstallOptions, InstallResult, DoctorResult, UninstallOptions, UninstallResult } from './adapter';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -113,7 +113,7 @@ requires_openai_auth = true
     };
   }
 
-  async uninstall(): Promise<void> {
+  async uninstall(options?: UninstallOptions): Promise<UninstallResult> {
     const configPath = path.join(os.homedir(), '.codex', 'config.toml');
 
     if (!fs.existsSync(configPath)) {
@@ -122,7 +122,15 @@ requires_openai_auth = true
 
     const content = fs.readFileSync(configPath, 'utf-8');
 
-    // Remove ai-relay-local section
+    // Check if ai-relay-local section exists
+    if (!content.includes('[model_providers.ai-relay-local]')) {
+      return {
+        success: false,
+        message: 'ai-relay-local provider not found in config',
+      };
+    }
+
+    // Remove ai-relay-local section only (preserve other user changes)
     const lines = content.split('\n');
     const filtered = [];
     let inSection = false;
@@ -140,6 +148,26 @@ requires_openai_auth = true
       }
     }
 
-    fs.writeFileSync(configPath, filtered.join('\n'));
+    const newContent = filtered.join('\n');
+
+    if (options?.dryRun) {
+      return {
+        success: true,
+        message: `Would remove ai-relay-local section from ${configPath}`,
+      };
+    }
+
+    // Create backup before uninstall
+    const backupPath = `${configPath}.backup.uninstall.${Date.now()}`;
+    fs.copyFileSync(configPath, backupPath);
+
+    // Write modified content
+    fs.writeFileSync(configPath, newContent);
+
+    return {
+      success: true,
+      message: `✅ Removed ai-relay-local provider\n   Backup: ${backupPath}`,
+      backupPath,
+    };
   }
 }

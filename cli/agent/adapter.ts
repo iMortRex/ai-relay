@@ -8,7 +8,7 @@ export interface AgentAdapter {
   detect(): Promise<{ installed: boolean; configPath?: string }>;
   install(options: InstallOptions): Promise<InstallResult>;
   doctor(): Promise<DoctorResult>;
-  uninstall(): Promise<void>;
+  uninstall(options?: UninstallOptions): Promise<UninstallResult>;
 }
 
 export interface InstallOptions {
@@ -30,4 +30,14 @@ export interface DoctorResult {
     status: 'pass' | 'warn' | 'fail';
     message: string;
   }>;
+}
+
+export interface UninstallOptions {
+  dryRun?: boolean;
+}
+
+export interface UninstallResult {
+  success: boolean;
+  message: string;
+  backupPath?: string;
 }
