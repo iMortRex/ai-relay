@@ -113,12 +113,19 @@ program
 program
   .command('agent:uninstall <agent>')
   .description('Uninstall agent adapter')
-  .action(async (agent: string) => {
+  .option('--dry-run', 'Show what would be changed')
+  .action(async (agent: string, options: { dryRun?: boolean }) => {
     const { CodexAdapter } = await import('./agent/codex-adapter.js');
 
     const adapter = new CodexAdapter();
-    await adapter.uninstall();
-    console.log(`✅ Uninstalled ${adapter.label} adapter`);
+    const result = await adapter.uninstall({ dryRun: options.dryRun });
+
+    if (result.success) {
+      console.log(result.message);
+    } else {
+      console.error(`❌ ${result.message}`);
+      process.exit(1);
+    }
   });
 
 program.parse();

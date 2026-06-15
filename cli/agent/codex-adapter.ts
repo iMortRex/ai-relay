@@ -2,7 +2,7 @@
 // AI Relay CLI — Codex Agent Adapter
 // ============================================================
 
-import type { AgentAdapter, InstallOptions, InstallResult, DoctorResult } from './adapter';
+import type { AgentAdapter, InstallOptions, InstallResult, DoctorResult, UninstallOptions, UninstallResult } from './adapter';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -113,58 +113,61 @@ requires_openai_auth = true
     };
   }
 
-  async uninstall(): Promise<void> {
+  async uninstall(options?: UninstallOptions): Promise<UninstallResult> {
     const configPath = path.join(os.homedir(), '.codex', 'config.toml');
 
     if (!fs.existsSync(configPath)) {
       throw new Error('Codex config not found');
     }
 
-    // Find the most recent backup
-    const configDir = path.dirname(configPath);
-    const backupPattern = path.basename(configPath) + '.backup.';
-    const backups = fs.readdirSync(configDir)
-      .filter(f => f.startsWith(backupPattern))
-      .map(f => ({
-        name: f,
-        path: path.join(configDir, f),
-        timestamp: parseInt(f.replace(backupPattern, ''), 10)
-      }))
-      .filter(b => !isNaN(b.timestamp))
-      .sort((a, b) => b.timestamp - a.timestamp);
+    const content = fs.readFileSync(configPath, 'utf-8');
 
-    if (backups.length === 0) {
-      // No backup found, fall back to manual removal
-      console.warn('⚠️  No backup found, removing ai-relay-local section manually');
-
-      const content = fs.readFileSync(configPath, 'utf-8');
-      const lines = content.split('\n');
-      const filtered = [];
-      let inSection = false;
-
-      for (const line of lines) {
-        if (line.trim() === '[model_providers.ai-relay-local]') {
-          inSection = true;
-          continue;
-        }
-        if (inSection && line.trim().startsWith('[')) {
-          inSection = false;
-        }
-        if (!inSection) {
-          filtered.push(line);
-        }
-      }
-
-      fs.writeFileSync(configPath, filtered.join('\n'));
-      console.log('✅ Removed ai-relay-local provider');
-      return;
+    // Check if ai-relay-local section exists
+    if (!content.includes('[model_providers.ai-relay-local]')) {
+      return {
+        success: false,
+        message: 'ai-relay-local provider not found in config',
+      };
     }
 
-    // Restore from most recent backup
-    const latestBackup = backups[0];
-    fs.copyFileSync(latestBackup.path, configPath);
+    // Remove ai-relay-local section only (preserve other user changes)
+    const lines = content.split('\n');
+    const filtered = [];
+    let inSection = false;
 
-    console.log(`✅ Restored config from backup: ${latestBackup.name}`);
-    console.log(`   ${backups.length} backup(s) available in ${configDir}`);
+    for (const line of lines) {
+      if (line.trim() === '[model_providers.ai-relay-local]') {
+        inSection = true;
+        continue;
+      }
+      if (inSection && line.trim().startsWith('[')) {
+        inSection = false;
+      }
+      if (!inSection) {
+        filtered.push(line);
+      }
+    }
+
+    const newContent = filtered.join('\n');
+
+    if (options?.dryRun) {
+      return {
+        success: true,
+        message: `Would remove ai-relay-local section from ${configPath}`,
+      };
+    }
+
+    // Create backup before uninstall
+    const backupPath = `${configPath}.backup.uninstall.${Date.now()}`;
+    fs.copyFileSync(configPath, backupPath);
+
+    // Write modified content
+    fs.writeFileSync(configPath, newContent);
+
+    return {
+      success: true,
+      message: `✅ Removed ai-relay-local provider\n   Backup: ${backupPath}`,
+      backupPath,
+    };
   }
 }
