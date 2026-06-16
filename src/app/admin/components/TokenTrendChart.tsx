@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { formatLargeNumber } from '../lib/format';
 
 interface UsagePoint {
   date: string;
@@ -158,11 +159,6 @@ export default function TokenTrendChart({ apiKey, lang = 'zh' }: TokenTrendChart
     fetchTrend();
   }, [fetchTrend]);
 
-  const fmtTokens = (n: number) => {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-    return n.toString();
-  };
 
   /** Format x-axis labels based on granularity */
   const fmtDate = (date: string) => {
@@ -236,12 +232,12 @@ export default function TokenTrendChart({ apiKey, lang = 'zh' }: TokenTrendChart
         <div style={{ color: '#888', marginBottom: '0.5rem' }}>{fmtTooltipDate(label)}</div>
         {payload.map((entry: any, i: number) => (
           <div key={i} style={{ color: entry.color, marginBottom: '0.25rem' }}>
-            {entry.name}: {fmtTokens(entry.value)}
+            {entry.name}: {formatLargeNumber(entry.value)}
           </div>
         ))}
         {payload.length >= 2 && (
           <div style={{ color: '#666', marginTop: '0.5rem', borderTop: '1px solid #333', paddingTop: '0.5rem' }}>
-            {t.total}: {fmtTokens(payload.reduce((sum: number, p: any) => sum + p.value, 0))}
+            {t.total}: {formatLargeNumber(payload.reduce((sum: number, p: any) => sum + p.value, 0))}
           </div>
         )}
       </div>
@@ -389,7 +385,7 @@ export default function TokenTrendChart({ apiKey, lang = 'zh' }: TokenTrendChart
                   tick={{ fontSize: 12 }}
                 />
                 <YAxis
-                  tickFormatter={fmtTokens}
+                  tickFormatter={formatLargeNumber}
                   stroke="#555"
                   tick={{ fontSize: 12 }}
                 />
@@ -429,7 +425,7 @@ export default function TokenTrendChart({ apiKey, lang = 'zh' }: TokenTrendChart
                   tick={{ fontSize: 12 }}
                 />
                 <YAxis
-                  tickFormatter={fmtTokens}
+                  tickFormatter={formatLargeNumber}
                   stroke="#555"
                   tick={{ fontSize: 12 }}
                 />
@@ -486,7 +482,7 @@ export default function TokenTrendChart({ apiKey, lang = 'zh' }: TokenTrendChart
                         {PROVIDER_DISPLAY_NAMES[p.provider] || p.provider}
                       </div>
                       <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color }}>
-                        {fmtTokens(p.totalTokens)}
+                        {formatLargeNumber(p.totalTokens)}
                       </div>
                     </div>
                   );
