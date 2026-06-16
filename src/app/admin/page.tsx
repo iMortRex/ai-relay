@@ -364,7 +364,7 @@ export default function AdminPage() {
           border-radius: 16px;
           padding: 1.5rem;
           box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-          max-height: 75vh !impotant;
+          max-height: 75vh !important;
           margin-bottom: 60px;
         }
         .stat-card {
