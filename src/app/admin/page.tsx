@@ -415,7 +415,7 @@ export default function AdminPage() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <LogoIcon size={38} />
           <div>
             <h1 style={{ fontSize: '1.8rem', margin: 0, fontWeight: 700, color: '#fff' }}>{t.title}</h1>
@@ -426,7 +426,7 @@ export default function AdminPage() {
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <Link
             href="/"
             style={{
