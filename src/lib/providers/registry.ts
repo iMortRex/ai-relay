@@ -52,59 +52,59 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
     ],
   },
   // ⚠️ xiaomi 排在前面，同为 mimo- 前缀时优先作为默认解析
-  xiaomi: {
-    name: 'xiaomi',
-    displayName: 'MiMo (API Key)',
-    baseUrl: 'https://api.xiaomimimo.com/v1',
-    modelPrefixes: ['mimo-'],
-    headerFormat: 'openai',
-    envKeyField: 'XIAOMI_KEYS',
-    envBaseUrlField: 'XIAOMI_BASE_URL',
-    modelMapping: {
-      'mimo-v2.5-pro-coding': 'mimo-v2.5-pro',
-      'mimo-v2.5-pro-sgp': 'mimo-v2.5-pro',
-      'mimo-v2.5-coding': 'mimo-v2.5',
-      'mimo-v2.5-sgp': 'mimo-v2.5',
-    },
-    models: [
-      { id: 'mimo-v2.5', displayName: 'MiMo v2.5', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
-      { id: 'mimo-v2.5-pro', displayName: 'MiMo v2.5 Pro', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
-    ],
-  },
-  xiaomi_sgp_coding: {
-    name: 'xiaomi_sgp_coding',
-    displayName: 'MiMo SGP (Coding Plan)',
-    baseUrl: 'https://token-plan-sgp.xiaomimimo.com/v1',
-    modelPrefixes: ['mimo-v2.5-pro-sgp', 'mimo-v2.5-sgp'],
-    headerFormat: 'azure',
-    envKeyField: 'XIAOMIMIMO_SGP_CODING_KEYS',
-    envBaseUrlField: 'XIAOMIMIMO_SGP_CODING_BASE_URL',
-    modelMapping: {
-      'mimo-v2.5-pro-sgp': 'mimo-v2.5-pro',
-      'mimo-v2.5-sgp': 'mimo-v2.5',
-    },
-    models: [
-      { id: 'mimo-v2.5-sgp', displayName: 'MiMo v2.5 (SGP Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
-      { id: 'mimo-v2.5-pro-sgp', displayName: 'MiMo v2.5 Pro (SGP Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
-    ],
-  },
-  xiaomi_coding: {
-    name: 'xiaomi_coding',
-    displayName: 'MiMo (Coding Plan)',
-    baseUrl: 'https://token-plan-cn.xiaomimimo.com/v1',
-    modelPrefixes: ['mimo-v2.5-pro-coding', 'mimo-v2.5-coding'],
-    headerFormat: 'openai',
-    envKeyField: 'XIAOMI_CODING_KEYS',
-    envBaseUrlField: 'XIAOMI_CODING_BASE_URL',
-    modelMapping: {
-      'mimo-v2.5-pro-coding': 'mimo-v2.5-pro',
-      'mimo-v2.5-coding': 'mimo-v2.5',
-    },
-    models: [
-      { id: 'mimo-v2.5-coding', displayName: 'MiMo v2.5 (Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
-      { id: 'mimo-v2.5-pro-coding', displayName: 'MiMo v2.5 Pro (Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
-    ],
-  },
+  // xiaomi: {
+  //   name: 'xiaomi',
+  //   displayName: 'MiMo (API Key)',
+  //   baseUrl: 'https://api.xiaomimimo.com/v1',
+  //   modelPrefixes: ['mimo-'],
+  //   headerFormat: 'openai',
+  //   envKeyField: 'XIAOMI_KEYS',
+  //   envBaseUrlField: 'XIAOMI_BASE_URL',
+  //   modelMapping: {
+  //     'mimo-v2.5-pro-coding': 'mimo-v2.5-pro',
+  //     'mimo-v2.5-pro-sgp': 'mimo-v2.5-pro',
+  //     'mimo-v2.5-coding': 'mimo-v2.5',
+  //     'mimo-v2.5-sgp': 'mimo-v2.5',
+  //   },
+  //   models: [
+  //     { id: 'mimo-v2.5', displayName: 'MiMo v2.5', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
+  //     { id: 'mimo-v2.5-pro', displayName: 'MiMo v2.5 Pro', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
+  //   ],
+  // },
+  // xiaomi_sgp_coding: {
+  //   name: 'xiaomi_sgp_coding',
+  //   displayName: 'MiMo SGP (Coding Plan)',
+  //   baseUrl: 'https://token-plan-sgp.xiaomimimo.com/v1',
+  //   modelPrefixes: ['mimo-v2.5-pro-sgp', 'mimo-v2.5-sgp'],
+  //   headerFormat: 'azure',
+  //   envKeyField: 'XIAOMIMIMO_SGP_CODING_KEYS',
+  //   envBaseUrlField: 'XIAOMIMIMO_SGP_CODING_BASE_URL',
+  //   modelMapping: {
+  //     'mimo-v2.5-pro-sgp': 'mimo-v2.5-pro',
+  //     'mimo-v2.5-sgp': 'mimo-v2.5',
+  //   },
+  //   models: [
+  //     { id: 'mimo-v2.5-sgp', displayName: 'MiMo v2.5 (SGP Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
+  //     { id: 'mimo-v2.5-pro-sgp', displayName: 'MiMo v2.5 Pro (SGP Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
+  //   ],
+  // },
+  // xiaomi_coding: {
+  //   name: 'xiaomi_coding',
+  //   displayName: 'MiMo (Coding Plan)',
+  //   baseUrl: 'https://token-plan-cn.xiaomimimo.com/v1',
+  //   modelPrefixes: ['mimo-v2.5-pro-coding', 'mimo-v2.5-coding'],
+  //   headerFormat: 'openai',
+  //   envKeyField: 'XIAOMI_CODING_KEYS',
+  //   envBaseUrlField: 'XIAOMI_CODING_BASE_URL',
+  //   modelMapping: {
+  //     'mimo-v2.5-pro-coding': 'mimo-v2.5-pro',
+  //     'mimo-v2.5-coding': 'mimo-v2.5',
+  //   },
+  //   models: [
+  //     { id: 'mimo-v2.5-coding', displayName: 'MiMo v2.5 (Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
+  //     { id: 'mimo-v2.5-pro-coding', displayName: 'MiMo v2.5 Pro (Coding)', contextWindow: 128000, maxOutput: 16384, supportsStream: true, supportsVision: true, supportsTools: true },
+  //   ],
+  // },
 };
 
 /** Known provider names (for usage trend queries etc.) */
